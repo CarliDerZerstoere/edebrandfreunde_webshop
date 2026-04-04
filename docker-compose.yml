@@ -1,0 +1,134 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - dashboard
+    networks:
+      - frontend
+
+  api:
+    image: ghcr.io/saleor/saleor:3.20
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/app/entrypoint-wrapper.sh"]
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "saleor.asgi:application"]
+    expose:
+      - "8000"
+    env_file:
+      - .env.api
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - saleor-media:/app/media
+      - ./rsa_private.pem:/run/secrets/rsa.pem:ro
+      - ./entrypoint.sh:/app/entrypoint-wrapper.sh:ro
+    networks:
+      - frontend
+      - backend
+
+  worker:
+    image: ghcr.io/saleor/saleor:3.20
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/app/entrypoint-wrapper.sh"]
+    command: ["celery", "--app", "saleor.celeryconf:app", "worker", "-E", "--loglevel=info"]
+    env_file:
+      - .env.api
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - saleor-media:/app/media
+      - ./rsa_private.pem:/run/secrets/rsa.pem:ro
+      - ./entrypoint.sh:/app/entrypoint-wrapper.sh:ro
+    networks:
+      - backend
+
+  beat:
+    image: ghcr.io/saleor/saleor:3.20
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/app/entrypoint-wrapper.sh"]
+    command: ["celery", "--app", "saleor.celeryconf:app", "beat", "--scheduler", "saleor.schedulers.schedulers.DatabaseScheduler"]
+    env_file:
+      - .env.api
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./rsa_private.pem:/run/secrets/rsa.pem:ro
+      - ./entrypoint.sh:/app/entrypoint-wrapper.sh:ro
+    networks:
+      - backend
+
+  dashboard:
+    image: ghcr.io/saleor/saleor-dashboard:latest
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      - API_URL=https://api.edelbrandfreunde.at/graphql/
+    networks:
+      - frontend
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_USER=saleor
+      - POSTGRES_PASSWORD=a46eb12d7397abf03ab6a72be57a55af
+      - POSTGRES_DB=saleor
+    volumes:
+      - saleor-db:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saleor -d saleor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    expose:
+      - "6379"
+    volumes:
+      - saleor-redis:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  saleor-db:
+  saleor-redis:
+  saleor-media:
+  caddy_data:
+  caddy_config:
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
