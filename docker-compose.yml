@@ -76,7 +76,7 @@ services:
       - backend
 
   dashboard:
-    image: ghcr.io/saleor/saleor-dashboard:latest
+    image: ghcr.io/saleor/saleor-dashboard:3.20
     restart: unless-stopped
     expose:
       - "80"
