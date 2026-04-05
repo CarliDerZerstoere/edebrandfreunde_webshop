@@ -10,6 +10,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - api
       - dashboard
@@ -92,7 +94,7 @@ services:
       - "5432"
     environment:
       - POSTGRES_USER=saleor
-      - POSTGRES_PASSWORD=a46eb12d7397abf03ab6a72be57a55af
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=saleor
     volumes:
       - saleor-db:/var/lib/postgresql/data
@@ -107,7 +109,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     expose:
       - "6379"
     volumes:
@@ -115,7 +119,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping 2>/dev/null | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -130,5 +134,8 @@ volumes:
 networks:
   frontend:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
   backend:
     driver: bridge

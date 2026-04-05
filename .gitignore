@@ -1,18 +1,18 @@
-# Secrets – NIEMALS committen
+# Secrets — NIEMALS committen
 .env
 .env.api
-rsa_private.pem
+*.pem
 
-# Node
-storefront/node_modules/
-storefront/.next/
+# Storefront (separater Clone von github.com/saleor/storefront)
+storefront/
 
-# Docker Volumes
+# Backups
+storefront-backup/
+
+# Docker Volumes (lokal)
 saleor-db/
 saleor-redis/
 saleor-media/
 
 # OS
 .DS_Store
-storefront/
-storefront/
