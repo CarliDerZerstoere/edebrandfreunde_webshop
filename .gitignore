@@ -9,6 +9,11 @@ storefront/
 # Backups
 storefront-backup/
 
+# Storefront-Custom Build-Artefakte (Source wird committet, Builds nicht)
+storefront-custom/node_modules/
+storefront-custom/.next/
+storefront-custom/.env
+
 # Docker Volumes (lokal)
 saleor-db/
 saleor-redis/

@@ -17,6 +17,18 @@ services:
       - dashboard
     networks:
       - frontend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   api:
     image: ghcr.io/saleor/saleor:3.20
@@ -39,6 +51,19 @@ services:
     networks:
       - frontend
       - backend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: '1.5'
+          pids: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   worker:
     image: ghcr.io/saleor/saleor:3.20
@@ -58,6 +83,18 @@ services:
       - ./entrypoint.sh:/app/entrypoint-wrapper.sh:ro
     networks:
       - backend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: '1.0'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   beat:
     image: ghcr.io/saleor/saleor:3.20
@@ -76,6 +113,18 @@ services:
       - ./entrypoint.sh:/app/entrypoint-wrapper.sh:ro
     networks:
       - backend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   dashboard:
     image: ghcr.io/saleor/saleor-dashboard:3.20
@@ -86,6 +135,18 @@ services:
       - API_URL=https://api.edelbrandfreunde.at/graphql/
     networks:
       - frontend
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   db:
     image: postgres:16-alpine
@@ -101,10 +162,22 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U saleor -d saleor"]
+      test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+          cpus: '1.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   redis:
     image: redis:7-alpine
@@ -123,6 +196,18 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
   saleor-db:

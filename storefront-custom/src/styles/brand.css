@@ -1,0 +1,104 @@
+/**
+ * ========================================
+ * EDELBRANDFREUNDE — DESIGN TOKENS
+ * ========================================
+ *
+ * Palette: "Aged Copper & Ink"
+ *
+ * Inspired by a distillery after hours —
+ * copper stills catching lamplight against dark oak walls,
+ * handwritten ledgers on aged paper.
+ *
+ * Not the generic "luxury gold on cream" that every AI produces.
+ * This palette has *patina* — the warmth of something that's been
+ * touched, used, loved. Burnished copper (not gold), aged
+ * parchment (not white), deep ink (not black).
+ */
+
+/* ============================================
+ * Light Theme (Default)
+ * ============================================ */
+:root {
+	/* --- Backgrounds --- */
+	--background: oklch(0.955 0.012 82);      /* Aged parchment — yellowish warmth */
+	--card: oklch(0.975 0.006 85);             /* Lighter parchment for cards */
+	--popover: oklch(0.975 0.006 85);
+	--secondary: oklch(0.925 0.016 78);        /* Deeper parchment — like old paper */
+	--muted: oklch(0.900 0.014 78);            /* Worn surface */
+	--accent: oklch(0.60 0.13 55);             /* Burnished copper-gold — warmer, truer gold */
+
+	/* --- Foregrounds --- */
+	--foreground: oklch(0.17 0.020 40);        /* Aged ink — warm near-black */
+	--card-foreground: oklch(0.17 0.020 40);
+	--popover-foreground: oklch(0.17 0.020 40);
+	--secondary-foreground: oklch(0.17 0.020 40);
+	--muted-foreground: oklch(0.42 0.018 50);  /* Faded ink — darkened for accessibility */
+	--accent-foreground: oklch(0.98 0.005 80); /* Light on copper */
+
+	/* --- Primary --- */
+	--primary: oklch(0.17 0.020 40);           /* Deep ink */
+	--primary-foreground: oklch(0.955 0.012 82);
+
+	/* --- Semantic --- */
+	--destructive: oklch(0.48 0.19 22);
+	--destructive-foreground: oklch(0.97 0 0);
+	--success: oklch(0.52 0.11 155);
+	--success-foreground: oklch(0.97 0 0);
+
+	/* --- Interactive --- */
+	--border: oklch(0.87 0.015 75);
+	--input: oklch(0.87 0.015 75);
+	--ring: oklch(0.60 0.13 55);               /* Gold ring */
+	--accent-subtle: oklch(0.92 0.045 62);     /* Faint golden blush — slightly more visible */
+	--accent-hover: oklch(0.52 0.15 50);       /* Darker patina copper */
+	--copper: oklch(0.50 0.12 42);             /* Deep copper — for decorative elements */
+	--copper-subtle: oklch(0.88 0.05 45);      /* Pale copper tint */
+
+	/* --- Layout --- */
+	--radius: 0.375rem;                         /* Tighter radius — more serious */
+
+	/* --- Skeleton --- */
+	--skeleton-delay: 300ms;
+}
+
+/* ============================================
+ * Skeleton Animation
+ * ============================================ */
+@keyframes skeleton-fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+/* ============================================
+ * Dark Theme — The distillery at night
+ * Copper stills glowing, oak barrels in shadow
+ * ============================================ */
+.dark {
+	--background: oklch(0.12 0.012 40);        /* Dark oak — deeper */
+	--card: oklch(0.18 0.012 40);              /* More lift from background */
+	--popover: oklch(0.17 0.012 40);
+	--secondary: oklch(0.21 0.012 42);
+	--muted: oklch(0.21 0.012 42);
+	--accent: oklch(0.68 0.12 55);             /* Polished copper-gold in lamplight */
+
+	--foreground: oklch(0.91 0.010 78);        /* Aged parchment white */
+	--card-foreground: oklch(0.91 0.010 78);
+	--popover-foreground: oklch(0.91 0.010 78);
+	--secondary-foreground: oklch(0.91 0.010 78);
+	--muted-foreground: oklch(0.57 0.015 55);
+	--accent-foreground: oklch(0.13 0.012 40);
+
+	--primary: oklch(0.91 0.010 78);
+	--primary-foreground: oklch(0.13 0.012 40);
+
+	--destructive: oklch(0.46 0.18 22);
+	--destructive-foreground: oklch(0.97 0 0);
+	--success: oklch(0.58 0.11 155);
+	--success-foreground: oklch(0.13 0.012 40);
+
+	--border: oklch(0.26 0.012 42);
+	--input: oklch(0.26 0.012 42);
+	--ring: oklch(0.65 0.12 52);
+	--accent-subtle: oklch(0.22 0.03 48);
+	--accent-hover: oklch(0.58 0.14 48);
+}

@@ -1,0 +1,14 @@
+# Edelbrandfreunde — Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://shop.edelbrandfreunde.at/sitemap.xml
+
+# Nicht indexieren
+Disallow: /api/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /login
+Disallow: /signup
+Disallow: /account/

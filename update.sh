@@ -7,16 +7,26 @@
 # ==============================================
 
 set -e
+trap 'echo "FEHLER in Zeile $LINENO. Prüfe den Status mit: docker compose ps"' ERR
 
 echo "=== Saleor Update $(date) ==="
 
 cd ~/saleor-production
 
+echo "[0/5] Pre-Update Datenbank-Backup..."
+docker compose exec -T db pg_dump -U saleor saleor | gzip > "backup_pre-update_$(date +%Y%m%d_%H%M%S).sql.gz"
+echo "       Backup erstellt."
+
 echo "[1/5] Docker Images aktualisieren..."
 docker compose -f docker-compose.yml pull
 
 echo "[2/5] Backend-Container neu starten..."
+docker compose -f docker-compose.yml up -d db redis
+echo "       Warte auf Datenbank..."
+sleep 10
 docker compose -f docker-compose.yml up -d api worker beat dashboard caddy
+echo "       Warte auf API..."
+sleep 10
 
 echo "[3/5] Datenbank-Migrationen..."
 docker compose -f docker-compose.yml run --rm api python3 manage.py migrate

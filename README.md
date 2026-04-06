@@ -386,6 +386,43 @@ Unter **Content → Navigation:**
 
 ---
 
+## Storefront wiederherstellen
+
+Falls der Server neu aufgesetzt wird oder die `storefront/` gelöscht wurde — der komplette angepasste Source-Code liegt in `storefront-custom/`:
+
+```bash
+# 1. Source kopieren
+cp -r storefront-custom storefront
+cd storefront
+
+# 2. Environment konfigurieren
+cp .env.example .env
+nano .env
+# NEXT_PUBLIC_DEFAULT_CHANNEL und NEXT_PUBLIC_SALEOR_API_URL anpassen
+
+# 3. Dependencies installieren
+pnpm install
+pnpm approve-builds
+
+# 4. GraphQL Types generieren
+NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/ pnpm run generate:all
+
+# 5. Bauen
+NEXT_OUTPUT=standalone \
+NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/ \
+NEXT_PUBLIC_DEFAULT_CHANNEL=oe \
+npx next build
+
+# 6. Statische Dateien kopieren
+cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+
+# 7. Service starten
+sudo systemctl restart saleor-storefront
+```
+
+---
+
 ## Dateien-Übersicht
 
 ```
@@ -399,11 +436,17 @@ saleor-production/
 ├── update.sh              # Update-Script
 ├── README.md              # Diese Datei
 │
+├── storefront-custom/     # ✅ Angepasster Storefront Source (in Git)
+│   ├── src/               # React/Next.js Source-Code
+│   ├── public/            # Statische Assets (Logo, Favicons)
+│   ├── package.json       # Dependencies
+│   └── .env.example       # Template für .env
+│
 ├── .env                   # ⛔ NICHT in Git (Passwörter)
 ├── .env.api               # ⛔ NICHT in Git (Secrets)
 ├── rsa_private.pem        # ⛔ NICHT in Git (JWT-Key)
 │
-└── storefront/            # ⛔ NICHT in Git (separater Clone)
+└── storefront/            # ⛔ NICHT in Git (Live-Build, separater Clone)
     ├── .env               # Channel + API-URL
     ├── src/styles/brand.css
     ├── src/config/brand.ts

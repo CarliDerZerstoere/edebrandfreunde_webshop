@@ -1,0 +1,388 @@
+/* postcss-import inlines this BEFORE Tailwind processes */
+@import "../styles/brand.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+ * FLUID SPACING SYSTEM — Porsche-inspired clamp() tokens
+ * Values scale linearly between the two viewport breakpoints
+ * (320 px → 1440 px) without hard jumps at arbitrary widths.
+ * ============================================================ */
+:root {
+	/* Section vertical padding */
+	--section-py:    clamp(64px,  5.5vw + 32px,  112px);
+	/* Container horizontal gutter */
+	--section-px:    clamp(16px,  1.25vw + 12px,  36px);
+	/* Large hero vertical padding */
+	--hero-py:       clamp(80px,  8vw  + 48px,   176px);
+	/* Gap between cards in a grid */
+	--card-gap:      clamp(12px,  1vw  + 8px,     20px);
+
+	/* Motion duration tokens */
+	--duration-xs:   0.15s;
+	--duration-sm:   0.25s;
+	--duration-md:   0.45s;
+	--duration-lg:   0.85s;
+	--duration-xl:   1.00s;
+	--duration-2xl:  1.20s;
+
+	/* Easing tokens */
+	--ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+	--ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+	--ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+	--ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================================
+ * BASE STYLES
+ * ============================================================ */
+@layer base {
+	*,
+	*::before,
+	*::after {
+		border-color: var(--border);
+	}
+
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		background-color: var(--background);
+		color: var(--foreground);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+}
+
+/* ============================================================
+ * KEYFRAMES
+ * ============================================================ */
+
+/* Hero shimmer — subtle ambient glow that drifts over the gradient bg */
+@keyframes hero-shimmer {
+	0%   { opacity: 0.35; transform: scale(1)    rotate(0deg); }
+	33%  { opacity: 0.50; transform: scale(1.08) rotate(1deg); }
+	66%  { opacity: 0.40; transform: scale(1.04) rotate(-0.5deg); }
+	100% { opacity: 0.35; transform: scale(1)    rotate(0deg); }
+}
+
+/* Hero secondary shimmer shifted in phase */
+@keyframes hero-shimmer-b {
+	0%   { opacity: 0.20; transform: scale(1)    rotate(0deg); }
+	40%  { opacity: 0.35; transform: scale(1.06) rotate(-1deg); }
+	70%  { opacity: 0.28; transform: scale(1.02) rotate(0.5deg); }
+	100% { opacity: 0.20; transform: scale(1)    rotate(0deg); }
+}
+
+/* Marquee ticker: slides the track one full copy to the left */
+@keyframes marquee-scroll {
+	from { transform: translateX(0); }
+	to   { transform: translateX(-50%); }
+}
+
+/* Scroll-indicator chevron gentle bounce */
+@keyframes scroll-bounce {
+	0%, 100% { transform: translateY(0); }
+	50%       { transform: translateY(7px); }
+}
+
+/* Fade-up used by quality stagger fallback (no-JS) */
+@keyframes fade-in-up {
+	from { opacity: 0; transform: translateY(12px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Section gradient-overlap pulse (very subtle, decorative) */
+@keyframes gradient-shift {
+	0%, 100% { background-position: 0% 50%; }
+	50%       { background-position: 100% 50%; }
+}
+
+/* ============================================================
+ * HERO BACKGROUND ANIMATIONS
+ * Attached to the absolute gradient layer in the Hero section.
+ * ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+	.hero-gradient-a {
+		animation: hero-shimmer    12s var(--ease-standard) infinite;
+	}
+	.hero-gradient-b {
+		animation: hero-shimmer-b  16s var(--ease-standard) infinite 3s;
+	}
+	.hero-gradient-c {
+		animation: hero-shimmer    20s var(--ease-standard) infinite 7s;
+	}
+}
+
+/* ============================================================
+ * QUALITY CARDS — fallback stagger (when JS is disabled)
+ * The JS-driven QualityCounter component handles this when JS
+ * is available; this is the CSS-only fallback.
+ * ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+	.quality-stagger > * {
+		opacity: 0;
+		animation: fade-in-up 0.5s ease-out forwards;
+	}
+	.quality-stagger > :nth-child(1) { animation-delay:   0ms; }
+	.quality-stagger > :nth-child(2) { animation-delay:  80ms; }
+	.quality-stagger > :nth-child(3) { animation-delay: 160ms; }
+	.quality-stagger > :nth-child(4) { animation-delay: 240ms; }
+}
+
+/* ============================================================
+ * INTERACTIVE CARD LIFT
+ * Composable hover class: add `card-lift` to any card element.
+ * ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+	.card-lift {
+		transition:
+			transform    var(--duration-sm) var(--ease-decelerate),
+			box-shadow   var(--duration-sm) var(--ease-decelerate);
+	}
+	.card-lift:hover {
+		transform:  translateY(-3px);
+		box-shadow:
+			0 6px 20px -4px oklch(0.17 0.02 40 / 0.12),
+			0 2px  6px -2px oklch(0.17 0.02 40 / 0.08);
+	}
+}
+
+/* ============================================================
+ * SECTION GRADIENT TRANSITIONS
+ * Adds a soft fade-out at the bottom of each "dark" section so
+ * the next light section reads as a seamless blend rather than
+ * a hard border.
+ * ============================================================ */
+.section-fade-bottom::after {
+	content: "";
+	display: block;
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	height: clamp(48px, 6vw, 96px);
+	background: linear-gradient(to bottom, transparent, var(--background));
+	pointer-events: none;
+}
+
+/* For dark/card sections where the next bg is --background */
+.section-fade-bottom-card::after {
+	content: "";
+	display: block;
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	height: clamp(48px, 6vw, 96px);
+	background: linear-gradient(to bottom, transparent, var(--card));
+	pointer-events: none;
+}
+
+/* ============================================================
+ * SCROLL-TIMELINE PROGRESSIVE REVEAL
+ * Uses the modern `animation-timeline: view()` spec where
+ * supported to drive opacity/translate from scroll position.
+ * Graceful degradation: browsers without support just see the
+ * element at full opacity (no layout shift, no broken UI).
+ * ============================================================ */
+@supports (animation-timeline: view()) {
+	@media (prefers-reduced-motion: no-preference) {
+		.scroll-reveal-auto {
+			animation: fade-in-up linear both;
+			animation-timeline: view();
+			animation-range: entry 0% entry 30%;
+		}
+	}
+}
+
+/* ============================================================
+ * PARALLAX DISTILLATION ILLUSTRATION
+ * Slow vertical drift on the SVG copper-still when the section
+ * is in view. CSS-only, no JS required.
+ * ============================================================ */
+@keyframes float-still {
+	0%, 100% { transform: translateY(0px) rotate(0deg); }
+	50%       { transform: translateY(-10px) rotate(0.3deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.still-float {
+		animation: float-still 8s var(--ease-standard) infinite;
+		transform-origin: bottom center;
+	}
+}
+
+/* ============================================================
+ * SCROLLBAR UTILITY
+ * Hides scrollbars while keeping scroll functionality.
+ * Used by ProductCarousel.
+ * ============================================================ */
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+/* ============================================================
+ * CINEMATIC SECTION SEPARATORS
+ * Used between sections instead of hard border-y lines.
+ * A gradient mask that blends adjacent backgrounds.
+ * ============================================================ */
+.section-divider-fade {
+	position: relative;
+	isolation: isolate;
+}
+.section-divider-fade::before {
+	content: "";
+	pointer-events: none;
+	position: absolute;
+	inset-inline: 0;
+	top: 0;
+	height: clamp(56px, 7vw, 108px);
+	background: linear-gradient(to bottom, var(--background), transparent);
+	z-index: 1;
+}
+.section-divider-fade::after {
+	content: "";
+	pointer-events: none;
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	height: clamp(56px, 7vw, 108px);
+	background: linear-gradient(to top, var(--background), transparent);
+	z-index: 1;
+}
+
+/* ============================================================
+ * FEATURED SECTION — DARK DRAMATIC BACKGROUND
+ * Full-bleed dark section for the product carousel.
+ * Uses the primary (deep ink) color so it feels like stepping
+ * into the distillery at night, separate from the parchment theme.
+ * ============================================================ */
+.featured-dark-section {
+	background-color: var(--primary);
+	color: var(--primary-foreground);
+	position: relative;
+	isolation: isolate;
+}
+.featured-dark-section::before {
+	content: "";
+	pointer-events: none;
+	position: absolute;
+	inset-inline: 0;
+	top: 0;
+	height: clamp(24px, 3vw, 48px);
+	background: linear-gradient(to bottom, var(--background), transparent);
+	z-index: 1;
+}
+.featured-dark-section::after {
+	content: "";
+	pointer-events: none;
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	height: clamp(24px, 3vw, 48px);
+	background: linear-gradient(to top, var(--background), transparent);
+	z-index: 1;
+}
+
+/* ============================================================
+ * CATEGORY BANNER — STACKED FULL-WIDTH LAYOUT
+ * Each category becomes a large horizontal banner.
+ * Image fills the background; text overlays it.
+ * ============================================================ */
+@keyframes category-pan {
+	0%   { transform: scale(1.05) translateX(0px); }
+	100% { transform: scale(1.05) translateX(-8px); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.category-banner:hover .category-banner-img {
+		animation: category-pan 8s var(--ease-standard) infinite alternate;
+	}
+}
+
+/* ============================================================
+ * DISTILLATION SECTION — AMBIENT GLOW
+ * Subtle radial glow behind the editorial two-column layout.
+ * ============================================================ */
+@keyframes ambient-glow {
+	0%, 100% { opacity: 0.18; }
+	50%       { opacity: 0.28; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.ambient-glow-pulse {
+		animation: ambient-glow 10s var(--ease-standard) infinite;
+	}
+}
+
+/* ============================================================
+ * ABOUT SECTION — QUOTE FLOURISH
+ * Large decorative opening quotation mark.
+ * ============================================================ */
+.quote-flourish::before {
+	content: "\201C";  /* left double quotation mark */
+	display: block;
+	font-family: var(--font-display, Georgia, serif);
+	font-size: clamp(4rem, 12vw, 10rem);
+	line-height: 0.75;
+	color: var(--accent);
+	opacity: 0.18;
+	margin-bottom: -0.5rem;
+	pointer-events: none;
+	user-select: none;
+}
+
+/* ============================================================
+ * CTA BUTTON SWEEP
+ * Background sweeps from left to right on hover.
+ * ============================================================ */
+.btn-sweep {
+	position: relative;
+	overflow: hidden;
+	z-index: 0;
+}
+.btn-sweep::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: var(--accent-hover);
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.btn-sweep:hover::before {
+		transform: scaleX(1);
+	}
+}
+
+/* ============================================================
+ * NAV LINK ANIMATED UNDERLINE
+ * Draws in from left on hover via ::after pseudo-element.
+ * ============================================================ */
+.nav-link-underline {
+	position: relative;
+}
+.nav-link-underline::after {
+	content: "";
+	position: absolute;
+	bottom: -2px;
+	left: 0;
+	width: 100%;
+	height: 1.5px;
+	background: var(--accent);
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-link-underline:hover::after,
+.nav-link-underline[data-active="true"]::after {
+	transform: scaleX(1);
+}

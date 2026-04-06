@@ -1,0 +1,26 @@
+query LandingPageContent($slug: String!) {
+	page(slug: $slug) {
+		id
+		title
+		content
+		seoTitle
+		seoDescription
+	}
+}
+
+query LandingCategories($first: Int!) {
+	categories(first: $first, sortBy: { field: NAME, direction: ASC }) {
+		edges {
+			node {
+				id
+				name
+				slug
+				description
+				backgroundImage(size: 512) {
+					url
+					alt
+				}
+			}
+		}
+	}
+}
