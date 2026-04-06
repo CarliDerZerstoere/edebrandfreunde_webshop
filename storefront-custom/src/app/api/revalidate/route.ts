@@ -206,13 +206,13 @@ export async function POST(request: NextRequest) {
 
 /**
  * @example Path-based revalidation:
- * curl -H "Authorization: Bearer <token>" "https://store.com/api/revalidate?path=/default-channel/products/my-product"
+ * curl -H "Authorization: Bearer <token>" "https://store.com/api/revalidate?path=/oe/products/my-product"
  *
  * @example Tag-based revalidation:
  * curl -H "Authorization: Bearer <token>" "https://store.com/api/revalidate?tag=product:my-product"
  *
  * @example Both at once:
- * curl -H "Authorization: Bearer <token>" "https://store.com/api/revalidate?path=/default-channel/products/my-product&tag=product:my-product"
+ * curl -H "Authorization: Bearer <token>" "https://store.com/api/revalidate?path=/oe/products/my-product&tag=product:my-product"
  *
  * @example Revalidate all cached data:
  * curl -H "Authorization: Bearer <token>" "https://store.com/api/revalidate?all=1"

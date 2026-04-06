@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
+import { MagneticWrapper } from "@/ui/components/magnetic-wrapper";
 
 interface HeroEntranceProps {
 	/** CMS-driven headline — editable in Saleor Dashboard → Content → Pages → landing-hero */
@@ -134,15 +135,17 @@ export function HeroEntrance({ title, tagline }: HeroEntranceProps) {
 
 			{/* CTA */}
 			<div className="hero-cta mt-12" data-hero-anim>
-				<LinkWithChannel
-					href="/products"
-					className="btn-sweep group inline-flex items-center gap-3 rounded bg-accent px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-accent-foreground transition-all duration-300 hover:tracking-[0.2em]"
-				>
-					Zum Shop
-					<span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-						&rarr;
-					</span>
-				</LinkWithChannel>
+				<MagneticWrapper strength={0.3}>
+					<LinkWithChannel
+						href="/products"
+						className="btn-sweep group inline-flex items-center gap-3 rounded bg-accent px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-accent-foreground transition-all duration-300 hover:tracking-[0.2em]"
+					>
+						Zum Shop
+						<span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+							&rarr;
+						</span>
+					</LinkWithChannel>
+				</MagneticWrapper>
 			</div>
 
 			{/* Scroll indicator */}

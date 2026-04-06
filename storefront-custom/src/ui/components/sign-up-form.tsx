@@ -183,7 +183,7 @@ export function SignUpForm() {
 							<Input
 								id="email"
 								type="email"
-								placeholder="you@example.com"
+								placeholder="name@beispiel.at"
 								autoComplete="email"
 								spellCheck={false}
 								value={email}
@@ -255,11 +255,11 @@ export function SignUpForm() {
 
 					<p className="text-center text-xs text-muted-foreground">
 						Mit der Erstellung eines Kontos stimmst du unseren{" "}
-						<Link href="/oe/pages/agb" className="underline hover:no-underline">
+						<Link href={`/${params.channel}/pages/agb`} className="underline hover:no-underline">
 							AGB
 						</Link>{" "}
 						und der{" "}
-						<Link href="/oe/pages/datenschutz" className="underline hover:no-underline">
+						<Link href={`/${params.channel}/pages/datenschutz`} className="underline hover:no-underline">
 							Datenschutzerklärung
 						</Link>{" "}
 						zu

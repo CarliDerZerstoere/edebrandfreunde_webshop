@@ -200,7 +200,7 @@ export const OrderSummary: FC<OrderSummaryProps> = ({ checkout, order, editable 
 					<div className="flex flex-col items-start">
 						<span className="text-sm font-medium">{isExpanded ? "Bestellübersicht ausblenden" : "Bestellübersicht anzeigen"}</span>
 						<span className="text-xs text-muted-foreground">
-							{itemCount} {itemCount === 1 ? "Artikel" : "Artikel"}
+							{itemCount} Artikel
 						</span>
 					</div>
 				</div>
@@ -219,7 +219,7 @@ export const OrderSummary: FC<OrderSummaryProps> = ({ checkout, order, editable 
 			<header className="bg-secondary/30 hidden items-center gap-2 px-5 py-4 md:flex">
 				<h2 className="text-base font-semibold">Bestellübersicht</h2>
 				<span className="text-sm text-muted-foreground">
-					({itemCount} {itemCount === 1 ? "Artikel" : "Artikel"})
+					({itemCount} Artikel)
 				</span>
 			</header>
 

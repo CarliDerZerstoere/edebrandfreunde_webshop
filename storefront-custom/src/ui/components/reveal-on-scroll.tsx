@@ -12,8 +12,9 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
  *   "fade-scale" — opacity + scale 0.95→1 + translateY (cinematic headings)
  *   "fade-blur"  — opacity + blur 6px→0 (body text coming into focus)
  *   "scrub-up"   — scroll-proportional fade+slide (Awwwards signature)
+ *   "clip-wipe"  — clipPath wipe from left to right (hard edge reveal)
  */
-export type RevealVariant = "fade-up" | "fade-scale" | "fade-blur" | "scrub-up";
+export type RevealVariant = "fade-up" | "fade-scale" | "fade-blur" | "scrub-up" | "clip-wipe";
 
 interface RevealOnScrollProps {
 	children: React.ReactNode;
@@ -74,6 +75,19 @@ export function RevealOnScroll({
 						scrub: 0.8,
 					},
 				});
+			} else if (variant === "clip-wipe") {
+				// Hard-edge clipPath wipe — no opacity/y involved
+				gsap.set(el, { clipPath: "inset(0 100% 0 0)" });
+				gsap.to(el, {
+					clipPath: "inset(0 0% 0 0)",
+					duration: 1.1,
+					ease: "power3.inOut",
+					scrollTrigger: {
+						trigger: el,
+						start: "top 80%",
+						once: true,
+					},
+				});
 			} else {
 				// Standard triggered animation — plays once when in view
 				gsap.fromTo(el, getFromVars(variant, slideDistance), {
@@ -111,6 +125,9 @@ function getFromVars(variant: RevealVariant, slideDistance: number): gsap.TweenV
 			return { opacity: 0, y: slideDistance * 0.6, filter: "blur(6px)", visibility: "visible" };
 		case "scrub-up":
 			return { opacity: 0, y: 50, scale: 0.97, visibility: "visible" };
+		case "clip-wipe":
+			// Initial state is set inside the context block via gsap.set; nothing to do here
+			return {};
 		default: // fade-up
 			return { opacity: 0, y: slideDistance, visibility: "visible" };
 	}
@@ -124,6 +141,9 @@ function getToVars(variant: RevealVariant): gsap.TweenVars {
 			return { opacity: 1, y: 0, filter: "blur(0px)", clearProps: "willChange,filter" };
 		case "scrub-up":
 			return { opacity: 1, y: 0, scale: 1 };
+		case "clip-wipe":
+			// Animation is driven directly inside the context block; this branch is never reached
+			return { clipPath: "inset(0 0% 0 0)", clearProps: "clipPath" };
 		default: // fade-up
 			return { opacity: 1, y: 0, clearProps: "willChange" };
 	}

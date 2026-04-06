@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { FilterBar, ProductGrid, useProductFilters, type ProductCardData } from "@/ui/components/plp";
 import { Pagination } from "@/ui/components/pagination";
+import { PaginationSkeleton } from "@/ui/components/pagination-skeleton";
 
 interface CategoryPageClientProps {
 	products: ProductCardData[];
@@ -13,15 +14,6 @@ interface CategoryPageClientProps {
 		endCursor?: string | null;
 	};
 	totalCount?: number;
-}
-
-function PaginationSkeleton() {
-	return (
-		<nav className="flex items-center justify-center gap-x-4 px-4 pt-12">
-			<span className="h-10 w-24 animate-pulse rounded bg-muted" />
-			<span className="h-10 w-24 animate-pulse rounded bg-muted" />
-		</nav>
-	);
 }
 
 export function CategoryPageClient({ products, pageInfo }: CategoryPageClientProps) {
@@ -73,7 +65,7 @@ export function CategoryPageClient({ products, pageInfo }: CategoryPageClientPro
 								onClick={handleClearFilters}
 								className="mt-4 text-sm font-medium text-foreground underline underline-offset-4"
 							>
-								Clear all filters
+								Alle Filter zurücksetzen
 							</button>
 						</div>
 					)}

@@ -53,7 +53,7 @@ export function OrderRow({ order }: Props) {
 				<p className="text-[13px] text-muted-foreground">
 					<time dateTime={order.created}>{formatDate(new Date(order.created))}</time>
 					{" · "}
-					{itemCount} {itemCount === 1 ? "Artikel" : "Artikel"}
+					{itemCount} Artikel
 				</p>
 			</div>
 

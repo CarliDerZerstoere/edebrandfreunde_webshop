@@ -36,14 +36,14 @@ export async function POST(request: NextRequest) {
 
 	if (!email || !token || !password) {
 		return NextResponse.json(
-			{ errors: [{ message: "Email, token, and password are required", code: "REQUIRED" }] },
+			{ errors: [{ message: "E-Mail, Token und Passwort sind erforderlich", code: "REQUIRED" }] },
 			{ status: 400 },
 		);
 	}
 
 	if (password.length < 8) {
 		return NextResponse.json(
-			{ errors: [{ message: "Password must be at least 8 characters", code: "PASSWORD_TOO_SHORT" }] },
+			{ errors: [{ message: "Passwort muss mindestens 8 Zeichen lang sein", code: "PASSWORD_TOO_SHORT" }] },
 			{ status: 400 },
 		);
 	}
@@ -93,12 +93,12 @@ export async function POST(request: NextRequest) {
 
 		return NextResponse.json({
 			success: true,
-			message: "Password updated successfully",
+			message: "Passwort erfolgreich aktualisiert",
 		});
 	}
 
 	return NextResponse.json(
-		{ errors: [{ message: "Failed to set password", code: "UNKNOWN" }] },
+		{ errors: [{ message: "Passwort konnte nicht gesetzt werden", code: "UNKNOWN" }] },
 		{ status: 500 },
 	);
 }

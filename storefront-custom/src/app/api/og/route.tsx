@@ -16,7 +16,7 @@ import { type NextRequest } from "next/server";
 export async function GET(request: NextRequest) {
 	const { searchParams } = request.nextUrl;
 
-	const title = searchParams.get("title") || "Saleor Store";
+	const title = searchParams.get("title") || "Edelbrandfreunde";
 	const subtitle = searchParams.get("subtitle") || "";
 	const price = searchParams.get("price") || "";
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 					flexDirection: "column",
 					alignItems: "center",
 					justifyContent: "center",
-					backgroundColor: "#FAF9F7", // --background
+					backgroundColor: "#F7F3EC", // --background
 					fontFamily: "system-ui, sans-serif",
 				}}
 			>
@@ -65,15 +65,15 @@ export async function GET(request: NextRequest) {
 							marginBottom: "40px",
 							fontSize: "24px",
 							fontWeight: "600",
-							color: "#1A1A1A",
+							color: "#1A2B1F",
 							letterSpacing: "-0.02em",
 						}}
 					>
 						{/* Simple sparkle icon */}
 						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ marginRight: "12px" }}>
-							<path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" fill="#1A1A1A" />
+							<path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" fill="#1A2B1F" />
 						</svg>
-						saleor
+						Edelbrandfreunde
 					</div>
 
 					{/* Title */}
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 						style={{
 							fontSize: "64px",
 							fontWeight: "700",
-							color: "#1A1A1A",
+							color: "#1A2B1F",
 							lineHeight: 1.1,
 							letterSpacing: "-0.03em",
 							marginBottom: subtitle || price ? "20px" : "0",
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
 							style={{
 								fontSize: "36px",
 								fontWeight: "600",
-								color: "#1A1A1A",
+								color: "#1A2B1F",
 								backgroundColor: "#FFFFFF",
 								padding: "12px 32px",
 								borderRadius: "8px",

@@ -53,14 +53,14 @@ export async function POST(request: NextRequest) {
 
 	if (!email || !password) {
 		return NextResponse.json(
-			{ errors: [{ message: "Email and password are required", code: "REQUIRED" }] },
+			{ errors: [{ message: "E-Mail und Passwort sind erforderlich", code: "REQUIRED" }] },
 			{ status: 400 },
 		);
 	}
 
 	if (redirectUrl && !isAllowedRedirectUrl(redirectUrl)) {
 		return NextResponse.json(
-			{ errors: [{ message: "Invalid redirect URL", code: "INVALID_REDIRECT" }] },
+			{ errors: [{ message: "Ungültige Weiterleitungs-URL", code: "INVALID_REDIRECT" }] },
 			{ status: 400 },
 		);
 	}
@@ -99,6 +99,6 @@ export async function POST(request: NextRequest) {
 	// Success
 	return NextResponse.json({
 		user: accountRegister?.user,
-		message: "Account created successfully. Please check your email to verify your account.",
+		message: "Konto erfolgreich erstellt. Bitte überprüfe deine E-Mail, um dein Konto zu verifizieren.",
 	});
 }

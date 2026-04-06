@@ -42,6 +42,24 @@ fragment ProductListItem on Product {
 		url
 		alt
 	}
+	media {
+		url(size: 1024, format: WEBP)
+		alt
+	}
+	attributes {
+		attribute {
+			slug
+			name
+		}
+		values {
+			name
+			value
+		}
+	}
+	metadata {
+		key
+		value
+	}
 	variants {
 		id
 		selectionAttributes: attributes(variantSelection: VARIANT_SELECTION) {

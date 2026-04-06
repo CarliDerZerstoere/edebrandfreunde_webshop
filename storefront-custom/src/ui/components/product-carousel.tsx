@@ -5,6 +5,7 @@ import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
 import { ProductImageWrapper } from "@/ui/atoms/product-image-wrapper";
 import { type ProductListItemFragment } from "@/gql/graphql";
 import { formatMoneyRange } from "@/lib/utils";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 interface ProductCarouselProps {
 	products: readonly ProductListItemFragment[];
@@ -22,19 +23,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 	const scrollRef = useRef<HTMLUListElement>(null);
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
 	const [canScrollRight, setCanScrollRight] = useState(true);
-	// Lazy initialiser reads media query once during first render on client.
-	const [prefersReduced, setPrefersReduced] = useState<boolean>(() => {
-		if (typeof window === "undefined") return false;
-		return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-	});
-
-	// Keep preference in sync if the user changes it at runtime.
-	useEffect(() => {
-		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-		const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
-		mq.addEventListener("change", handler);
-		return () => mq.removeEventListener("change", handler);
-	}, []);
+	const prefersReduced = useReducedMotion();
 
 	const updateScrollState = useCallback(() => {
 		const el = scrollRef.current;

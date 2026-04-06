@@ -22,17 +22,13 @@ export interface ImageCarouselImage {
 interface ImageCarouselProps {
 	images: ImageCarouselImage[];
 	productName: string;
-	/** Show navigation arrows (default: true on desktop) */
 	showArrows?: boolean;
-	/** Show dot indicators (default: true on mobile) */
 	showDots?: boolean;
-	/** Show thumbnail strip (default: true on desktop) */
 	showThumbnails?: boolean;
-	/** Callback when active index changes */
 	onIndexChange?: (index: number) => void;
-	/** Callback when image is tapped/clicked (for lightbox integration) */
 	onImageClick?: (index: number) => void;
-	/** Additional class name for the container */
+	/** Add data-zoomable to images for medium-zoom integration */
+	zoomable?: boolean;
 	className?: string;
 }
 
@@ -57,6 +53,7 @@ export function ImageCarousel({
 	showThumbnails = true,
 	onIndexChange,
 	onImageClick,
+	zoomable = false,
 	className,
 }: ImageCarouselProps) {
 	const [api, setApi] = React.useState<CarouselApi>();
@@ -96,7 +93,7 @@ export function ImageCarousel({
 	if (!images.length) {
 		return (
 			<div className="flex aspect-[4/5] w-full items-center justify-center rounded-lg bg-secondary">
-				<span className="text-muted-foreground">No image available</span>
+				<span className="text-muted-foreground">Kein Bild verfügbar</span>
 			</div>
 		);
 	}
@@ -122,11 +119,12 @@ export function ImageCarousel({
 								>
 									<Image
 										src={image.url}
-										alt={image.alt || `${productName} - View ${index + 1}`}
+										alt={image.alt || `${productName} - Ansicht ${index + 1}`}
 										fill
-										className="object-cover"
+										className={cn("object-cover", zoomable && "cursor-zoom-in")}
 										sizes="(max-width: 768px) 100vw, 50vw"
 										priority={index === 0}
+										{...(zoomable ? { "data-zoomable": "" } : {})}
 									/>
 								</div>
 							</CarouselItem>

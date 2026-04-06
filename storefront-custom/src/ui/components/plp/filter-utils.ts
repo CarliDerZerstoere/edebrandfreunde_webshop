@@ -33,10 +33,10 @@ export interface CategoryOption {
 // ============================================================================
 
 export const STATIC_PRICE_RANGES = [
-	{ label: "Under $50", value: "0-50" },
-	{ label: "$50 - $100", value: "50-100" },
-	{ label: "$100 - $200", value: "100-200" },
-	{ label: "$200+", value: "200-" },
+	{ label: "Unter €30", value: "0-30" },
+	{ label: "€30 – €50", value: "30-50" },
+	{ label: "€50 – €100", value: "50-100" },
+	{ label: "Über €100", value: "100-" },
 ] as const;
 
 /** Price ranges with count=0 for FilterBar compatibility */
@@ -235,7 +235,7 @@ export function buildActiveFilters(filters: {
 	const active: ActiveFilter[] = [];
 
 	filters.colors?.forEach((color) => {
-		active.push({ key: "color", label: "Color", value: color });
+		active.push({ key: "color", label: "Farbe", value: color });
 	});
 
 	filters.sizes?.forEach((size) => {
@@ -244,7 +244,7 @@ export function buildActiveFilters(filters: {
 
 	if (filters.priceRange) {
 		const [min, max] = filters.priceRange.split("-");
-		const label = max ? `$${min} - $${max}` : `$${min}+`;
+		const label = max ? `€${min} – €${max}` : `Ab €${min}`;
 		active.push({ key: "price", label: "Preis", value: label });
 	}
 

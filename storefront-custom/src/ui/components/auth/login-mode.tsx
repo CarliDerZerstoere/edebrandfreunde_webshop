@@ -148,7 +148,7 @@ export function LoginMode() {
 							<Input
 								id="email"
 								type="email"
-								placeholder="you@example.com"
+								placeholder="name@beispiel.at"
 								autoComplete="email"
 								spellCheck={false}
 								value={email}

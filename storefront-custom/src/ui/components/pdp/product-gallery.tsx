@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import mediumZoom from "medium-zoom";
 import { ImageCarousel, type ImageCarouselImage } from "@/ui/components/ui/image-carousel";
 
 interface ProductGalleryProps {
@@ -7,27 +9,29 @@ interface ProductGalleryProps {
 	productName: string;
 }
 
-/**
- * Product Gallery with mobile swipe support.
- *
- * Features:
- * - Horizontal swipe on mobile (Embla Carousel)
- * - Arrow navigation on desktop (hover to reveal)
- * - Thumbnail strip on desktop
- * - Dot indicators on mobile
- * - First image has priority for LCP optimization
- *
- * Note: Zoom/lightbox is not included - can be added separately
- * via the `onImageClick` prop if needed in the future.
- */
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+		const imgs = containerRef.current.querySelectorAll<HTMLImageElement>("img[data-zoomable]");
+		const zoom = mediumZoom(imgs, {
+			margin: 24,
+			background: "rgba(0, 0, 0, 0.85)",
+		});
+		return () => { zoom.detach(); };
+	}, [images]);
+
 	return (
-		<ImageCarousel
-			images={images}
-			productName={productName}
-			showArrows={true}
-			showDots={true}
-			showThumbnails={true}
-		/>
+		<div ref={containerRef}>
+			<ImageCarousel
+				images={images}
+				productName={productName}
+				showArrows={true}
+				showDots={true}
+				showThumbnails={true}
+				zoomable={true}
+			/>
+		</div>
 	);
 }

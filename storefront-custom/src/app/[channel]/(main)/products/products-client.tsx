@@ -1,8 +1,12 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useCallback, useState } from "react";
+import { useParams } from "next/navigation";
 import { FilterBar, ProductGrid, useProductFilters, type ProductCardData } from "@/ui/components/plp";
 import { Pagination } from "@/ui/components/pagination";
+import { PaginationSkeleton } from "@/ui/components/pagination-skeleton";
+import { useCart } from "@/ui/components/cart/cart-context";
+import { quickAddToCart } from "@/ui/components/plp/actions";
 
 interface ProductsPageClientProps {
 	products: ProductCardData[];
@@ -13,26 +17,51 @@ interface ProductsPageClientProps {
 		endCursor?: string | null;
 	};
 	totalCount?: number;
-	/** Categories resolved from URL slugs (server-side) for active filter display */
 	resolvedCategories?: Array<{ slug: string; id: string; name: string }>;
+	cmsPriceRanges?: { value: string; label: string; count: number }[] | null;
 }
 
-function PaginationSkeleton() {
-	return (
-		<nav className="flex items-center justify-center gap-x-4 px-4 pt-12">
-			<span className="h-10 w-24 animate-pulse rounded bg-muted" />
-			<span className="h-10 w-24 animate-pulse rounded bg-muted" />
-		</nav>
+export function ProductsPageClient({ products, pageInfo, resolvedCategories = [], cmsPriceRanges }: ProductsPageClientProps) {
+	const params = useParams();
+	const channel = params.channel as string;
+	const { openCart } = useCart();
+	// Track add-to-cart state per product: idle → pending → success → idle
+	const [addingStates, setAddingStates] = useState<Record<string, "pending" | "success">>({});
+
+	const handleQuickAdd = useCallback(
+		async (productId: string, variantId: string) => {
+			setAddingStates((prev) => ({ ...prev, [productId]: "pending" }));
+
+			const result = await quickAddToCart(channel, variantId);
+
+			if (result.success) {
+				setAddingStates((prev) => ({ ...prev, [productId]: "success" }));
+				// Show checkmark for 1.5s, then open cart and reset
+				setTimeout(() => {
+					openCart();
+					setAddingStates((prev) => {
+						const next = { ...prev };
+						delete next[productId];
+						return next;
+					});
+				}, 1200);
+			} else {
+				setAddingStates((prev) => {
+					const next = { ...prev };
+					delete next[productId];
+					return next;
+				});
+			}
+		},
+		[channel, openCart],
 	);
-}
 
-export function ProductsPageClient({ products, pageInfo, resolvedCategories = [] }: ProductsPageClientProps) {
 	const {
 		filteredProducts,
 		categoryOptions,
 		colorOptions,
 		sizeOptions,
-		priceRanges,
+		priceRanges: _unusedPriceRanges,
 		selectedCategories,
 		selectedColors,
 		selectedSizes,
@@ -51,6 +80,15 @@ export function ProductsPageClient({ products, pageInfo, resolvedCategories = []
 		resolvedCategories,
 		enableCategoryFilter: true,
 	});
+
+	// Only show price ranges if configured in CMS (no fallback)
+	const priceRanges = cmsPriceRanges && cmsPriceRanges.length > 0 ? cmsPriceRanges : [];
+
+	const enrichedProducts = filteredProducts.map((p) => ({
+		...p,
+		onQuickAdd: !p.hasVariants && p.firstVariantId ? handleQuickAdd : undefined,
+		quickAddState: (addingStates[p.id] ?? "idle") as "idle" | "pending" | "success",
+	}));
 
 	return (
 		<>
@@ -75,9 +113,9 @@ export function ProductsPageClient({ products, pageInfo, resolvedCategories = []
 				onClearFilters={handleClearFilters}
 			/>
 			<div className="w-full">
-				<div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-					{filteredProducts.length > 0 ? (
-						<ProductGrid products={filteredProducts} />
+				<div className="mx-auto max-w-7xl px-4 pt-10 pb-8 sm:px-6 lg:px-8 lg:pt-14">
+					{enrichedProducts.length > 0 ? (
+						<ProductGrid products={enrichedProducts} />
 					) : (
 						<div className="py-12 text-center">
 							<p className="text-lg text-muted-foreground">Keine Produkte gefunden.</p>

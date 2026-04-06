@@ -33,7 +33,7 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
 
 	const errors = result.data.accountUpdate?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to update profile" };
+		return { success: false, error: errors[0].message ?? "Profil konnte nicht aktualisiert werden" };
 	}
 
 	revalidatePath("/account", "layout");
@@ -46,11 +46,11 @@ export async function changePassword(formData: FormData): Promise<ActionResult> 
 	const confirmPassword = getFormString(formData, "confirmPassword");
 
 	if (newPassword.length < 8) {
-		return { success: false, error: "New password must be at least 8 characters" };
+		return { success: false, error: "Neues Passwort muss mindestens 8 Zeichen lang sein" };
 	}
 
 	if (newPassword !== confirmPassword) {
-		return { success: false, error: "Passwords do not match" };
+		return { success: false, error: "Passwörter stimmen nicht überein" };
 	}
 
 	const result = await executeAuthenticatedGraphQL(PasswordChangeDocument, {
@@ -64,7 +64,7 @@ export async function changePassword(formData: FormData): Promise<ActionResult> 
 
 	const errors = result.data.passwordChange?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to change password" };
+		return { success: false, error: errors[0].message ?? "Passwort konnte nicht geändert werden" };
 	}
 
 	return { success: true };
@@ -84,7 +84,7 @@ export async function createAddress(formData: FormData): Promise<ActionResult> {
 
 	const errors = result.data.accountAddressCreate?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to create address" };
+		return { success: false, error: errors[0].message ?? "Adresse konnte nicht erstellt werden" };
 	}
 
 	revalidatePath("/account/addresses", "page");
@@ -106,7 +106,7 @@ export async function updateAddress(formData: FormData): Promise<ActionResult> {
 
 	const errors = result.data.accountAddressUpdate?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to update address" };
+		return { success: false, error: errors[0].message ?? "Adresse konnte nicht aktualisiert werden" };
 	}
 
 	revalidatePath("/account/addresses", "page");
@@ -127,7 +127,7 @@ export async function deleteAddress(formData: FormData): Promise<ActionResult> {
 
 	const errors = result.data.accountAddressDelete?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to delete address" };
+		return { success: false, error: errors[0].message ?? "Adresse konnte nicht gelöscht werden" };
 	}
 
 	revalidatePath("/account/addresses", "page");
@@ -151,7 +151,7 @@ export async function setDefaultAddress(formData: FormData): Promise<ActionResul
 
 	const errors = result.data.accountSetDefaultAddress?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to set default address" };
+		return { success: false, error: errors[0].message ?? "Standardadresse konnte nicht gesetzt werden" };
 	}
 
 	revalidatePath("/account/addresses", "page");
@@ -173,7 +173,7 @@ export async function requestAccountDeletion(formData: FormData): Promise<Action
 
 	const errors = result.data.accountRequestDeletion?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to request account deletion" };
+		return { success: false, error: errors[0].message ?? "Kontolöschung konnte nicht angefordert werden" };
 	}
 
 	return { success: true };

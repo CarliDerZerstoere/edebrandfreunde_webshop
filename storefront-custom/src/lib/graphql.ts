@@ -101,19 +101,19 @@ function success<T>(data: T): GraphQLSuccess<T> {
 export function getUserMessage(error: GraphQLError): string {
 	switch (error.type) {
 		case "network":
-			return "Unable to connect to the store. Please check your internet connection.";
+			return "Verbindung zum Shop konnte nicht hergestellt werden. Bitte überprüfe deine Internetverbindung.";
 		case "http":
 			if (error.statusCode === 401 || error.statusCode === 403) {
-				return "You don't have permission to view this content.";
+				return "Du hast keine Berechtigung, diesen Inhalt anzuzeigen.";
 			}
 			if (error.statusCode === 404) {
-				return "The item you're looking for doesn't exist or has been removed.";
+				return "Der gesuchte Artikel existiert nicht oder wurde entfernt.";
 			}
-			return "The store is temporarily unavailable. Please try again in a moment.";
+			return "Der Shop ist vorübergehend nicht verfügbar. Bitte versuche es in einem Moment erneut.";
 		case "graphql":
-			return "Something went wrong loading this page.";
+			return "Beim Laden dieser Seite ist ein Fehler aufgetreten.";
 		case "validation":
-			return error.message || "Please check your input and try again.";
+			return error.message || "Bitte überprüfe deine Eingaben und versuche es erneut.";
 	}
 }
 

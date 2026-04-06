@@ -17,6 +17,8 @@ interface VariantSectionDynamicProps {
 	product: Product;
 	channel: string;
 	searchParams: Promise<{ variant?: string }>;
+	volumeMl?: number | null;
+	trustSignals?: string[];
 }
 
 /**
@@ -26,7 +28,7 @@ interface VariantSectionDynamicProps {
  * because it accesses searchParams (runtime data). The product data is
  * already cached in the static shell - this just adds the interactive parts.
  */
-export async function VariantSectionDynamic({ product, channel, searchParams }: VariantSectionDynamicProps) {
+export async function VariantSectionDynamic({ product, channel, searchParams, volumeMl, trustSignals }: VariantSectionDynamicProps) {
 	const { variant: variantParam } = await searchParams;
 	const variants = product.variants || [];
 
@@ -146,6 +148,10 @@ export async function VariantSectionDynamic({ product, channel, searchParams }: 
 					discountPercent={discountPercent}
 					disabled={isAddToCartDisabled}
 					disabledReason={disabledReason}
+					priceAmount={selectedVariant?.pricing?.price?.gross?.amount ?? product.pricing?.priceRange?.start?.gross?.amount}
+					currency={selectedVariant?.pricing?.price?.gross?.currency ?? product.pricing?.priceRange?.start?.gross?.currency}
+					volumeMl={volumeMl}
+					trustSignals={trustSignals}
 				/>
 
 				{/* Sticky Add to Cart Bar (Mobile) */}

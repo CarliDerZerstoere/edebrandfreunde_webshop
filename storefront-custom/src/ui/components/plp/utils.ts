@@ -69,6 +69,31 @@ export function transformToProductCard(product: ProductListItemFragment, channel
 	const colors = extractColorsFromVariants(product.variants);
 	const sizes = extractSizesFromVariants(product.variants);
 
+	// Extract ABV from product attributes
+	const abvAttr = product.attributes?.find((a) => a.attribute.slug === "alkoholgehalt");
+	const abv = abvAttr?.values?.[0]?.name ?? null;
+
+	// Extract Volume from product attributes
+	const volumeAttr = product.attributes?.find((a) => a.attribute.slug === "inhalt");
+	const volume = volumeAttr?.values?.[0]?.name ?? null;
+
+	// Extract variety (Sorte) from product attributes
+	const varietyAttr = product.attributes?.find((a) => a.attribute.slug === "sorte");
+	const variety = varietyAttr?.values?.[0]?.name ?? null;
+
+	// Extract vintage (Jahrgang) from product attributes
+	const vintageAttr = product.attributes?.find((a) => a.attribute.slug === "jahrgang");
+	const vintage = vintageAttr?.values?.[0]?.name ?? null;
+
+	// Extract badge from product metadata (e.g. "Bestseller", "Limitiert", "Destillata Gold")
+	const badgeMeta = product.metadata?.find((m) => m.key === "badge");
+	const metadataBadge = badgeMeta?.value ?? null;
+
+	// Hover image from second media item
+	const hoverImage = product.media && product.media.length > 1 ? product.media[1].url : null;
+
+	const hasVariants = (product.variants?.length ?? 0) > 1;
+
 	return {
 		id: product.id,
 		name: product.name,
@@ -79,16 +104,21 @@ export function transformToProductCard(product: ProductListItemFragment, channel
 		currency: startPrice?.currency ?? localeConfig.fallbackCurrency,
 		image: product.thumbnail?.url ?? "/placeholder.svg",
 		imageAlt: product.thumbnail?.alt ?? product.name,
-		hoverImage: null, // Would need additional media in fragment
+		hoverImage,
 		href: `/${channel}/products/${product.slug}`,
-		badge: isSale ? "Sale" : null,
+		badge: isSale ? "Aktion" : metadataBadge,
 		colors,
 		sizes,
+		abv,
+		volume,
+		variety,
+		vintage,
 		category: product.category
 			? { id: product.category.id, name: product.category.name, slug: product.category.slug }
 			: null,
 		createdAt: product.created,
-		hasVariants: (product.variants?.length ?? 0) > 1,
+		hasVariants,
+		firstVariantId: !hasVariants ? product.variants?.[0]?.id ?? null : null,
 	};
 }
 

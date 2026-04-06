@@ -2,95 +2,92 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { gsap } from "@/lib/gsap";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 /**
- * PageTransition — claude.ai-style dissolve effect.
+ * PageTransition — Apple-style dissolve.
  *
- * On route change this component finds the nearest <main> element and applies
- * a short fade-out + translateY exit, then lets the new content fade in.
- *
- * Architecture: sibling component (never wraps children) so it is fully
- * compatible with Next.js Partial Prerendering and Suspense boundaries.
+ * On route change, <main> fades out with a subtle upward drift,
+ * then the new content fades in with a soft downward settle.
  *
  * Timing:
- *   fade-out  150ms  ease-in     (old content leaves)
- *   gap        50ms              (brief pause while Next.js swaps the tree)
- *   fade-in   300ms  ease-out    (new content arrives with a subtle lift)
+ *   Phase 1  opacity 1→0, y 0→-6   200ms  ease-in   (old content exits)
+ *   Gap                              50ms             (Next.js swaps tree)
+ *   Phase 2  opacity 0→1, y 8→0    350ms  ease-out   (new content arrives)
+ *   Cleanup  strip inline styles    after Phase 2
  *
- * Respects prefers-reduced-motion — does nothing when motion is reduced.
+ * Renders no DOM — manipulates <main> directly.
  */
 export function PageTransition() {
 	const pathname = usePathname();
 	const prevPathname = useRef<string | null>(null);
-	const rafRef = useRef<number>(0);
-	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const tlRef = useRef<gsap.core.Timeline | null>(null);
+	const ctxRef = useRef<gsap.Context | null>(null);
+	const prefersReduced = useReducedMotion();
 
 	useEffect(() => {
-		// Skip on the very first render (no previous path yet).
 		if (prevPathname.current === null) {
 			prevPathname.current = pathname;
 			return;
 		}
-
-		// No change — nothing to do.
 		if (prevPathname.current === pathname) return;
 		prevPathname.current = pathname;
 
-		// Respect reduced motion.
-		if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-			return;
-		}
-
-		const main = document.querySelector("main");
+		const main = document.querySelector("main") as HTMLElement | null;
 		if (!main) return;
 
-		// Cancel any in-flight transition.
-		cancelAnimationFrame(rafRef.current);
-		if (timerRef.current !== null) clearTimeout(timerRef.current);
+		// Kill in-flight animation
+		tlRef.current?.kill();
+		ctxRef.current?.revert();
 
-		// --- Phase 1: fade out ---
-		// Force the element into a known starting state first.
-		(main as HTMLElement).style.transition = "none";
-		(main as HTMLElement).style.opacity = "1";
-		(main as HTMLElement).style.transform = "translateY(0)";
+		// Reduced motion: instant swap, no animation
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		if (prefersReduced) return;
 
-		// Next tick: apply the exit transition.
-		rafRef.current = requestAnimationFrame(() => {
-			(main as HTMLElement).style.transition =
-				"opacity 150ms cubic-bezier(0.4, 0, 1, 1), transform 150ms cubic-bezier(0.4, 0, 1, 1)";
-			(main as HTMLElement).style.opacity = "0";
-			(main as HTMLElement).style.transform = "translateY(-6px)";
+		const ctx = gsap.context(() => {
+			const tl = gsap.timeline({
+				onComplete: () => {
+					gsap.set(main, { clearProps: "opacity,y,transform" });
+				},
+			});
+			tlRef.current = tl;
 
-			// --- Phase 2: brief gap, then fade in ---
-			timerRef.current = setTimeout(() => {
-				// Reset to the entering state without a transition so the
-				// starting position is set before we animate in.
-				(main as HTMLElement).style.transition = "none";
-				(main as HTMLElement).style.opacity = "0";
-				(main as HTMLElement).style.transform = "translateY(8px)";
-
-				rafRef.current = requestAnimationFrame(() => {
-					(main as HTMLElement).style.transition =
-						"opacity 300ms cubic-bezier(0, 0, 0.2, 1), transform 300ms cubic-bezier(0, 0, 0.2, 1)";
-					(main as HTMLElement).style.opacity = "1";
-					(main as HTMLElement).style.transform = "translateY(0)";
-
-					// Clean up inline styles once the animation finishes.
-					timerRef.current = setTimeout(() => {
-						(main as HTMLElement).style.transition = "";
-						(main as HTMLElement).style.opacity = "";
-						(main as HTMLElement).style.transform = "";
-					}, 320);
-				});
-			}, 200); // 150ms exit + 50ms pause
+			// Phase 1: fade out + subtle upward drift
+			tl.to(main, {
+				opacity: 0,
+				y: -6,
+				duration: 0.2,
+				ease: "power2.in",
+			})
+			// Phase 2: fade in + soft downward settle
+			.fromTo(main,
+				{ opacity: 0, y: 8 },
+				{
+					opacity: 1,
+					y: 0,
+					duration: 0.35,
+					ease: "power2.out",
+				},
+				"+=0.05",
+			);
 		});
 
+		ctxRef.current = ctx;
+
 		return () => {
-			cancelAnimationFrame(rafRef.current);
-			if (timerRef.current !== null) clearTimeout(timerRef.current);
+			tlRef.current?.kill();
+			ctx.revert();
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pathname]);
 
-	// This component renders no DOM nodes — it only manipulates the <main> element.
+	useEffect(() => {
+		return () => {
+			tlRef.current?.kill();
+			ctxRef.current?.revert();
+		};
+	}, []);
+
 	return null;
 }

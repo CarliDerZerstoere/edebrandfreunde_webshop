@@ -45,14 +45,14 @@ export async function POST(request: NextRequest) {
 
 	if (!email || !channel || !redirectUrl) {
 		return NextResponse.json(
-			{ errors: [{ message: "Email, channel, and redirectUrl are required", code: "REQUIRED" }] },
+			{ errors: [{ message: "E-Mail, Channel und Weiterleitungs-URL sind erforderlich", code: "REQUIRED" }] },
 			{ status: 400 },
 		);
 	}
 
 	if (!isAllowedRedirectUrl(redirectUrl)) {
 		return NextResponse.json(
-			{ errors: [{ message: "Invalid redirect URL", code: "INVALID_REDIRECT" }] },
+			{ errors: [{ message: "Ungültige Weiterleitungs-URL", code: "INVALID_REDIRECT" }] },
 			{ status: 400 },
 		);
 	}

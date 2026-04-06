@@ -6,7 +6,8 @@ import edjsHTML from "editorjs-html";
 import xss from "xss";
 
 import { executePublicGraphQL } from "@/lib/graphql";
-import { ProductDetailsDocument, type ProductDetailsQuery } from "@/gql/graphql";
+import { ProductDetailsDocument, LandingPageContentDocument, type ProductDetailsQuery } from "@/gql/graphql";
+import { parseEditorJSToText } from "@/lib/editorjs";
 import { buildPageMetadata, buildProductJsonLd } from "@/lib/seo";
 import { Breadcrumbs } from "@/ui/components/breadcrumbs";
 import {
@@ -106,11 +107,27 @@ async function ProductContent({
 }) {
 	const [params, searchParams] = await Promise.all([paramsPromise, searchParamsPromise]);
 
-	const product = await getProductData(params.slug, params.channel);
+	const [product, trustBarResult] = await Promise.all([
+		getProductData(params.slug, params.channel),
+		executePublicGraphQL(LandingPageContentDocument, {
+			variables: { slug: "pdp-trust-signals" },
+			revalidate: 3600,
+		}),
+	]);
 
 	if (!product) {
 		notFound();
 	}
+
+	// Parse CMS trust signals (pipe-separated)
+	const trustBarText = trustBarResult.ok && trustBarResult.data.page
+		? parseEditorJSToText(trustBarResult.data.page.content)
+		: null;
+	const trustSignals = trustBarText ? trustBarText.split("|").map((s: string) => s.trim()).filter(Boolean) : [];
+
+	// Extract volume in ml from product attribute for per-serving calculation
+	const volumeAttr = product.attributes?.find((a) => a.attribute.slug === "inhalt")?.values?.[0]?.name;
+	const volumeMl = volumeAttr ? parseVolumeMl(volumeAttr) : null;
 
 	const variants = product.variants || [];
 	const selectedVariantId = searchParams.variant || (variants.length === 1 ? variants[0].id : undefined);
@@ -120,9 +137,10 @@ async function ProductContent({
 	const images = getGalleryImages(product, selectedVariant);
 	const productAttributes = extractProductAttributes(product);
 	const careInstructions = extractCareInstructions(product);
+	const spiritMeta = extractSpiritMetadata(product);
 
 	const breadcrumbs = [
-		{ label: "Home", href: `/${params.channel}` },
+		{ label: "Startseite", href: `/${params.channel}` },
 		...(product.category
 			? [{ label: product.category.name, href: `/${params.channel}/categories/${product.category.slug}` }]
 			: []),
@@ -160,7 +178,9 @@ async function ProductContent({
 				/>
 			)}
 
-			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-10">
+			{/* div, not <main> — already inside the layout's <main>. A nested
+			    <main> confuses document.querySelector("main") used by PageTransition. */}
+			<div className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-10">
 				<div className="mb-6 hidden sm:block">
 					<Breadcrumbs items={breadcrumbs} />
 				</div>
@@ -170,10 +190,37 @@ async function ProductContent({
 						<ProductGallery images={images} productName={product.name} />
 					</div>
 
-					<div className="flex flex-col gap-3">
-						<h1 className="order-2 font-display text-balance text-3xl font-bold tracking-tight lg:text-4xl">
+					<div className="flex flex-col gap-5">
+						<h1 className="order-2 font-display text-balance text-4xl font-bold tracking-tight lg:text-5xl">
 							{product.name}
 						</h1>
+
+						{/* Spirit metadata: ABV, Volume, Awards, Batch size */}
+						{(spiritMeta.abv || spiritMeta.volume || spiritMeta.award || spiritMeta.batchSize) && (
+							<div className="order-2 space-y-2">
+								{(spiritMeta.abv || spiritMeta.volume) && (
+									<p className="text-sm text-muted-foreground">
+										{[spiritMeta.abv && `${spiritMeta.abv}% vol.`, spiritMeta.volume]
+											.filter(Boolean)
+											.join(" · ")}
+									</p>
+								)}
+								{spiritMeta.award && (
+									<p className="flex items-center gap-1.5 text-sm font-medium text-accent">
+										<svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+											<circle cx="12" cy="8" r="7" />
+											<path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />
+										</svg>
+										{spiritMeta.award}
+									</p>
+								)}
+								{spiritMeta.batchSize && (
+									<p className="text-xs text-muted-foreground">
+										Kleine Auflage · {spiritMeta.batchSize} Flaschen
+									</p>
+								)}
+							</div>
+						)}
 
 						<ErrorBoundary FallbackComponent={VariantSectionError}>
 							<Suspense fallback={<VariantSectionSkeleton />}>
@@ -181,6 +228,8 @@ async function ProductContent({
 									product={product}
 									channel={params.channel}
 									searchParams={searchParamsPromise}
+									volumeMl={volumeMl}
+									trustSignals={trustSignals}
 								/>
 							</Suspense>
 						</ErrorBoundary>
@@ -194,7 +243,7 @@ async function ProductContent({
 						</div>
 					</div>
 				</div>
-			</main>
+			</div>
 		</div>
 	);
 }
@@ -206,7 +255,8 @@ async function ProductContent({
 function ProductPageSkeleton() {
 	return (
 		<div className="flex min-h-screen animate-skeleton-delayed flex-col bg-background opacity-0">
-			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-10">
+			{/* div, not <main> — already inside the layout's <main>. */}
+			<div className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-10">
 				<div className="mb-6 hidden h-4 w-64 animate-pulse rounded bg-secondary sm:block" />
 				<div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
 					<div className="aspect-square animate-pulse rounded-lg bg-secondary" />
@@ -220,7 +270,7 @@ function ProductPageSkeleton() {
 						<div className="mt-4 h-12 w-full animate-pulse rounded bg-secondary" />
 					</div>
 				</div>
-			</main>
+			</div>
 		</div>
 	);
 }
@@ -275,6 +325,33 @@ function extractCareInstructions(product: NonNullable<ProductDetailsQuery["produ
 			.filter(Boolean)
 			.join(". ") || null
 	);
+}
+
+/** Parse volume string like "0,7l", "0,5l", "350ml" to ml */
+function parseVolumeMl(volume: string): number | null {
+	const cleaned = volume.replace(/\s/g, "").toLowerCase();
+	// Match "0,7l" or "0.7l"
+	const literMatch = cleaned.match(/^(\d+[.,]\d+)\s*l$/);
+	if (literMatch) return Math.round(parseFloat(literMatch[1].replace(",", ".")) * 1000);
+	// Match "700ml" or "350ml"
+	const mlMatch = cleaned.match(/^(\d+)\s*ml$/);
+	if (mlMatch) return parseInt(mlMatch[1], 10);
+	return null;
+}
+
+function extractSpiritMetadata(product: NonNullable<ProductDetailsQuery["product"]>) {
+	const findAttr = (slug: string) =>
+		product.attributes?.find((a) => a.attribute.slug === slug)?.values?.[0]?.name ?? null;
+	const findMeta = (key: string) =>
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(product as any).metadata?.find?.((m: { key: string; value: string }) => m.key === key)?.value ?? null;
+
+	return {
+		abv: findAttr("alkoholgehalt"),
+		volume: findAttr("inhalt"),
+		award: findAttr("auszeichnungen") ?? findMeta("award"),
+		batchSize: findAttr("abfuellmenge") ?? findMeta("batch_size"),
+	};
 }
 
 type Product = NonNullable<ProductDetailsQuery["product"]>;

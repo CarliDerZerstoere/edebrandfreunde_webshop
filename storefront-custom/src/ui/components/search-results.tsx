@@ -59,7 +59,7 @@ function SearchResultCard({
 						priority={priority}
 					/>
 				) : (
-					<div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
+					<div className="flex h-full items-center justify-center text-muted-foreground">Kein Bild</div>
 				)}
 			</div>
 

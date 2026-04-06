@@ -9,16 +9,16 @@ import { Logo } from "./shared/logo";
 // Default footer links when no CMS data is available
 const defaultFooterLinks = {
 	support: [
-		{ label: "Kontakt", href: "/contact" },
-		{ label: "Versand", href: "/shipping" },
-		{ label: "Widerruf", href: "/returns" },
-		{ label: "FAQ", href: "/faq" },
+		{ label: "Kontakt", href: "/oe/pages/kontakt" },
+		{ label: "Versand", href: "/oe/pages/versand" },
+		{ label: "Widerruf", href: "/oe/pages/widerruf" },
+		{ label: "FAQ", href: "/oe/pages/faq" },
 	],
 	company: [
-		{ label: "Über uns", href: "/about" },
-		{ label: "Unsere Brände", href: "/products" },
-		{ label: "Impressum", href: "/impressum" },
-		{ label: "Datenschutz", href: "/privacy" },
+		{ label: "Über uns", href: "/oe/pages/ueber-uns" },
+		{ label: "Unsere Brände", href: "/oe/products" },
+		{ label: "Impressum", href: "/oe/pages/impressum" },
+		{ label: "Datenschutz", href: "/oe/pages/datenschutz" },
 	],
 };
 
@@ -113,15 +113,26 @@ export async function Footer({ channel }: { channel: string }) {
 										);
 									}
 									if (child.url) {
+										const isInternal = child.url.startsWith("/");
 										return (
 											<li key={child.id}>
-												<Link
-													href={child.url}
-													prefetch={false}
-													className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
-												>
-													{child.name}
-												</Link>
+												{isInternal ? (
+													<LinkWithChannel
+														href={child.url}
+														prefetch={false}
+														className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
+													>
+														{child.name}
+													</LinkWithChannel>
+												) : (
+													<Link
+														href={child.url}
+														prefetch={false}
+														className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
+													>
+														{child.name}
+													</Link>
+												)}
 											</li>
 										);
 									}

@@ -65,6 +65,10 @@ async function SearchContent({
 		redirect(`/${params.channel}/search?query=${encodeURIComponent(query)}`);
 	}
 
+	if (query.length > 200) {
+		redirect(`/${params.channel}/search?query=${encodeURIComponent(query.slice(0, 200))}`);
+	}
+
 	// Parse pagination
 	const cursor = Array.isArray(searchParams.cursor) ? searchParams.cursor[0] : searchParams.cursor;
 	const direction = searchParams.direction === "backward" ? "backward" : "forward";

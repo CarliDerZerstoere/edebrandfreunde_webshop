@@ -62,34 +62,13 @@ export const SearchBar = ({ channel }: { channel: string }) => {
 				const apiUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL;
 				if (!apiUrl) return;
 
-				// Saleor's search filter uses PostgreSQL full-text search which
-				// doesn't support prefix matching ("Mar" won't find "Marillen").
-				// So we fetch more results and also try the search filter,
-				// then combine and client-side filter for prefix matches.
 				const res = await fetch(apiUrl, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					signal: controller.signal,
 					body: JSON.stringify({
 						query: `query SearchSuggestions($search: String!, $channel: String!) {
-						searchResults: products(first: 5, channel: $channel, filter: { search: $search }) {
-							edges {
-								node {
-									name
-									slug
-									category { name }
-									thumbnail(size: 128, format: WEBP) { url }
-									pricing {
-										priceRange {
-											start {
-												gross { amount currency }
-											}
-										}
-									}
-								}
-							}
-						}
-						allProducts: products(first: 50, channel: $channel) {
+						products(first: 10, channel: $channel, filter: { search: $search }) {
 							edges {
 								node {
 									name
@@ -137,27 +116,7 @@ export const SearchBar = ({ channel }: { channel: string }) => {
 					currency: edge.node.pricing?.priceRange?.start?.gross?.currency,
 				});
 
-				// Combine: exact search results + client-side prefix filter on all products
-				const searchResults = data?.data?.searchResults?.edges?.map(mapEdge) ?? [];
-				const allProducts = data?.data?.allProducts?.edges?.map(mapEdge) ?? [];
-
-				const searchLower = search.toLowerCase();
-				const prefixMatches = allProducts.filter(
-					(p: SearchResult) =>
-						p.name.toLowerCase().includes(searchLower) ||
-						(p.category && p.category.toLowerCase().includes(searchLower)),
-				);
-
-				// Merge: search results first, then prefix matches (deduplicated)
-				const seen = new Set<string>();
-				const products: SearchResult[] = [];
-				for (const p of [...searchResults, ...prefixMatches]) {
-					if (!seen.has(p.slug)) {
-						seen.add(p.slug);
-						products.push(p);
-					}
-					if (products.length >= 5) break;
-				}
+				const products: SearchResult[] = data?.data?.products?.edges?.map(mapEdge) ?? [];
 
 				setResults(products);
 				setIsOpen(products.length > 0);
@@ -252,6 +211,7 @@ export const SearchBar = ({ channel }: { channel: string }) => {
 					onFocus={() => results.length > 0 && setIsOpen(true)}
 					onKeyDown={handleKeyDown}
 					placeholder="Produkte suchen..."
+					maxLength={200}
 					autoComplete="off"
 					role="combobox"
 					aria-expanded={isOpen}

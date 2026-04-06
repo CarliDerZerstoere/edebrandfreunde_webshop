@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import {
 	ProductListByCollectionDocument,
 	ProductOrderField,
@@ -15,6 +14,7 @@ import { parseEditorJSToHtml, parseEditorJSToText } from "@/lib/editorjs";
 import { HeroEntrance } from "@/ui/components/hero-entrance";
 import { HeroVideoBackground } from "@/ui/components/hero-video-background";
 import { RevealOnScroll } from "@/ui/components/reveal-on-scroll";
+import { TextReveal } from "@/ui/components/text-reveal";
 import { MarqueeBanner } from "@/ui/components/marquee-banner";
 import { ProductCarousel } from "@/ui/components/product-carousel";
 import { QualityCounter } from "@/ui/components/quality-counter";
@@ -82,44 +82,33 @@ async function getFeaturedProducts(channel: string) {
 /* ============================================
  * Page
  * ============================================ */
-export default function Page(props: { params: Promise<{ channel: string }> }) {
+export default async function Page(props: { params: Promise<{ channel: string }> }) {
+	const { channel } = await props.params;
+
+	// Batch all CMS + data fetches into one Promise.all to avoid serial
+	// roundtrips through the throttled GraphQL request queue (~200ms each).
+	const [heroPage, sortimentPage, bestsellPage, qualitaetPage, destillationPage, aboutPage, categories, products] =
+		await Promise.all([
+			getCmsPage("landing-hero"),
+			getCmsPage("landing-sortiment"),
+			getCmsPage("landing-bestseller"),
+			getCmsPage("landing-qualitaet"),
+			getCmsPage("landing-destillation"),
+			getCmsPage("landing-about"),
+			getCategories(),
+			getFeaturedProducts(channel),
+		]);
+
 	return (
 		<>
-			{/* ─── Hero ─── full-viewport, no RevealOnScroll (IS the page entry) */}
-			<Suspense fallback={<HeroSkeleton />}>
-				<HeroSection />
-			</Suspense>
-
-			{/* ─── Marquee ─── immediate brand immersion after hero */}
+			<HeroSection page={heroPage} />
 			<MarqueeBanner />
-
-			{/* ─── Categories ─── full-width stacked banners */}
-			<Suspense fallback={null}>
-				<CategoriesSection />
-			</Suspense>
-
-			{/* ─── Featured Products ─── dark cinematic section */}
-			<Suspense fallback={<SectionSkeleton />}>
-				<FeaturedSection params={props.params} />
-			</Suspense>
-
-			{/* ─── Second marquee ─── between commerce and editorial */}
+			<CategoriesSection page={sortimentPage} categories={categories} />
+			<FeaturedSection page={bestsellPage} products={products} />
 			<MarqueeBanner speed={50} />
-
-			{/* ─── About ─── emotional hook before technical validation */}
-			<Suspense fallback={null}>
-				<AboutSection />
-			</Suspense>
-
-			{/* ─── Distillation ─── craft story */}
-			<Suspense fallback={null}>
-				<DestillationSection />
-			</Suspense>
-
-			{/* ─── Quality ─── animated stats */}
-			<Suspense fallback={null}>
-				<QualitySection />
-			</Suspense>
+			<AboutSection page={aboutPage} />
+			<DestillationSection page={destillationPage} />
+			<QualitySection page={qualitaetPage} />
 		</>
 	);
 }
@@ -135,8 +124,8 @@ export default function Page(props: { params: Promise<{ channel: string }> }) {
  * of making the first section command complete attention.
  * ============================================ */
 
-async function HeroSection() {
-	const page = await getCmsPage("landing-hero");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function HeroSection({ page }: { page: any }) {
 	const tagline = (page ? parseEditorJSToText(page.content) : null) ?? brandConfig.tagline;
 	const title = page?.title ?? "Edelbrandfreunde";
 
@@ -174,17 +163,6 @@ async function HeroSection() {
 	);
 }
 
-function HeroSkeleton() {
-	return (
-		<section className="flex min-h-screen items-center bg-primary py-36 lg:py-44">
-			<div className="mx-auto max-w-4xl w-full text-center">
-				<div className="mx-auto h-28 w-28 animate-pulse rounded-full bg-primary-foreground/5" />
-				<div className="mx-auto mt-10 h-14 w-80 animate-pulse rounded bg-primary-foreground/5" />
-			</div>
-		</section>
-	);
-}
-
 /* ============================================
  * Kategorien
  * Dashboard: Content → Pages → "landing-sortiment"
@@ -198,8 +176,8 @@ function HeroSkeleton() {
  * rather than a cramped grid.
  * ============================================ */
 
-async function CategoriesSection() {
-	const [categories, page] = await Promise.all([getCategories(), getCmsPage("landing-sortiment")]);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CategoriesSection({ page, categories }: { page: any; categories: any[] }) {
 	if (categories.length === 0) return null;
 
 	const title = page?.title ?? "Unsere Edelbrände";
@@ -216,9 +194,9 @@ async function CategoriesSection() {
 			{/* Section header */}
 			<RevealOnScroll variant="fade-scale">
 				<Eyebrow label="Sortiment" />
-				<h2 className="mt-4 text-center font-display text-section font-semibold tracking-tight">
+				<TextReveal as="h2" className="mt-4 text-center font-display text-section font-semibold tracking-tight">
 					{title}
-				</h2>
+				</TextReveal>
 				{subtitle && (
 					<p className="mx-auto mt-5 max-w-xl whitespace-pre-line text-center text-muted-foreground sm:text-lg">
 						{subtitle}
@@ -244,8 +222,7 @@ async function CategoriesSection() {
 							<RevealOnScroll
 								key={cat.id}
 								delay={index * 80}
-								variant="fade-scale"
-								slideDistance={20}
+								variant="clip-wipe"
 							>
 								<LinkWithChannel href={`/categories/${cat.slug}`} className="category-banner block">
 									<div
@@ -354,10 +331,8 @@ async function CategoriesSection() {
  * contrast against the parchment sections before and after.
  * ============================================ */
 
-async function FeaturedSection({ params: paramsPromise }: { params: Promise<{ channel: string }> }) {
-	const { channel } = await paramsPromise;
-	const [products, page] = await Promise.all([getFeaturedProducts(channel), getCmsPage("landing-bestseller")]);
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function FeaturedSection({ page, products }: { page: any; products: any[] }) {
 	const title = page?.title ?? "Bestseller";
 	const subtitle = page ? parseEditorJSToText(page.content) : null;
 
@@ -430,8 +405,8 @@ async function FeaturedSection({ params: paramsPromise }: { params: Promise<{ ch
  *            z.B. "100% Handarbeit — Jeder Edelbrand wird..."
  * ============================================ */
 
-async function QualitySection() {
-	const page = await getCmsPage("landing-qualitaet");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function QualitySection({ page }: { page: any }) {
 	if (!page) return null;
 
 	const contentHtml = parseEditorJSToHtml(page.content);
@@ -452,9 +427,9 @@ async function QualitySection() {
 		>
 			<RevealOnScroll variant="fade-scale">
 				<Eyebrow label="Qualität" />
-				<h2 className="mt-4 text-center font-display text-section font-semibold tracking-tight">
+				<TextReveal as="h2" className="mt-4 text-center font-display text-section font-semibold tracking-tight">
 					{page.title}
-				</h2>
+				</TextReveal>
 			</RevealOnScroll>
 
 			{/*
@@ -477,8 +452,8 @@ async function QualitySection() {
  * Full-viewport or near-full-viewport cinematic editorial section.
  * ============================================ */
 
-async function DestillationSection() {
-	const page = await getCmsPage("landing-destillation");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DestillationSection({ page }: { page: any }) {
 	if (!page) return null;
 
 	const contentHtml = parseEditorJSToHtml(page.content);
@@ -503,9 +478,9 @@ async function DestillationSection() {
 					{/* Text column */}
 					<RevealOnScroll variant="fade-scale" slideDistance={36}>
 						<Eyebrow label="Handwerk" align="left" />
-						<h2 className="mt-4 font-display text-section font-semibold tracking-tight">
+						<TextReveal as="h2" className="mt-4 font-display text-section font-semibold tracking-tight">
 							{page.title}
-						</h2>
+						</TextReveal>
 						{contentHtml && (
 							<div className="mt-8 space-y-5">
 								{contentHtml.map((html, i) => (
@@ -601,8 +576,8 @@ async function DestillationSection() {
  * The decorative quote flourish gives it a magazine/editorial feel.
  * ============================================ */
 
-async function AboutSection() {
-	const page = await getCmsPage("landing-about");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function AboutSection({ page }: { page: any }) {
 	if (!page) return null;
 
 	const contentHtml = parseEditorJSToHtml(page.content);
@@ -619,9 +594,9 @@ async function AboutSection() {
 
 				<RevealOnScroll variant="fade-scale">
 					<Eyebrow label="Geschichte" />
-					<h2 className="mt-4 font-display text-section font-semibold tracking-tight">
+					<TextReveal as="h2" className="mt-4 font-display text-section font-semibold tracking-tight">
 						{page.title}
-					</h2>
+					</TextReveal>
 				</RevealOnScroll>
 
 				{contentHtml && (
@@ -668,17 +643,6 @@ function Eyebrow({
 		>
 			{label}
 		</p>
-	);
-}
-
-function SectionSkeleton() {
-	return (
-		<section className="featured-dark-section py-28">
-			<div className="relative z-10 mx-auto max-w-7xl px-4 text-center">
-				<div className="mx-auto h-4 w-20 animate-pulse rounded bg-primary-foreground/10" />
-				<div className="mx-auto mt-4 h-10 w-56 animate-pulse rounded bg-primary-foreground/10" />
-			</div>
-		</section>
 	);
 }
 

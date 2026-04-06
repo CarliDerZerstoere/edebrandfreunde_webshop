@@ -3,7 +3,7 @@ import { AuthProvider } from "@/lib/auth";
 import { brandConfig, formatPageTitle } from "@/config/brand";
 
 export const metadata = {
-	title: formatPageTitle("Checkout"),
+	title: formatPageTitle("Kasse"),
 	description: brandConfig.description,
 };
 

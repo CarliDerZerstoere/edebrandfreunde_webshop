@@ -423,9 +423,11 @@ export function FilterBar({
 
 					{/* Right: Result Count + Sort */}
 					<div className="flex shrink-0 items-center gap-3">
-						<span className="hidden text-sm text-muted-foreground sm:block">
-							{resultCount} {resultCount === 1 ? "Produkt" : "Produkte"}
-						</span>
+						{activeFilterCount > 0 && (
+							<span className="hidden text-sm text-muted-foreground sm:block">
+								{resultCount} {resultCount === 1 ? "Produkt" : "Produkte"}
+							</span>
+						)}
 
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>

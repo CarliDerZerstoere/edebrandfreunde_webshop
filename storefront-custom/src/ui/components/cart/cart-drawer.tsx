@@ -262,7 +262,7 @@ export function CartDrawer({ checkoutId, lines, totalPrice, channel }: CartDrawe
 														disabled={isPending}
 													>
 														<Trash2 className="h-4 w-4" />
-														<span className="sr-only">Remove {line.variant.product.name}</span>
+														<span className="sr-only">Entfernen: {line.variant.product.name}</span>
 													</Button>
 												</div>
 
@@ -277,7 +277,7 @@ export function CartDrawer({ checkoutId, lines, totalPrice, channel }: CartDrawe
 															className="p-2 transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
 														>
 															<Minus className="h-3 w-3" />
-															<span className="sr-only">Decrease quantity</span>
+															<span className="sr-only">Menge verringern</span>
 														</button>
 														<span className="w-8 text-center text-sm font-medium">{line.quantity}</span>
 														<button
@@ -287,7 +287,7 @@ export function CartDrawer({ checkoutId, lines, totalPrice, channel }: CartDrawe
 															className="p-2 transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
 														>
 															<Plus className="h-3 w-3" />
-															<span className="sr-only">Increase quantity</span>
+															<span className="sr-only">Menge erhöhen</span>
 														</button>
 													</div>
 

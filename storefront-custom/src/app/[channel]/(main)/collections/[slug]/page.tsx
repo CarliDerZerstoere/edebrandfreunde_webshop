@@ -76,7 +76,7 @@ async function CollectionContent({
 	const plainDescription = parseEditorJSToText(collection.description);
 
 	const breadcrumbs = [
-		{ label: "Home", href: `/${params.channel}` },
+		{ label: "Startseite", href: `/${params.channel}` },
 		{ label: collection.name, href: `/${params.channel}/collections/${params.slug}` },
 	];
 

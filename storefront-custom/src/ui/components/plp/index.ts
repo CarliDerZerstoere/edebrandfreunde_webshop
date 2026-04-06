@@ -29,3 +29,4 @@ export {
 	type CategoryOption,
 } from "./filter-utils";
 export { useProductFilters } from "./use-product-filters";
+export { TrustBar } from "./trust-bar";
