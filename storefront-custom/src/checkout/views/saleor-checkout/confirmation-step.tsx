@@ -46,7 +46,7 @@ export const ConfirmationStep: FC<ConfirmationStepProps> = ({ checkout }) => {
 		<div className="space-y-8">
 			{/* Demo Banner */}
 			<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-800">
-				<strong>Demo Mode:</strong> This is a simulated order confirmation. No real payment was processed.
+				<strong>Demo-Modus:</strong> Dies ist eine simulierte Bestellbestätigung. Es wurde keine echte Zahlung durchgeführt.
 			</div>
 
 			{/* Success Header */}
@@ -58,17 +58,17 @@ export const ConfirmationStep: FC<ConfirmationStepProps> = ({ checkout }) => {
 					</div>
 				</div>
 				<div>
-					<p className="text-muted-foreground">Order {orderNumber}</p>
-					<h1 className="mt-1 text-2xl font-semibold">Thank you for your order!</h1>
+					<p className="text-muted-foreground">Bestellung {orderNumber}</p>
+					<h1 className="mt-1 text-2xl font-semibold">Vielen Dank für deine Bestellung!</h1>
 				</div>
 			</div>
 
 			{/* Order Confirmation Card */}
 			<div className="overflow-hidden rounded-lg border border-border">
 				<div className="bg-secondary/50 border-b border-border p-4">
-					<h2 className="font-semibold">Your order is confirmed</h2>
+					<h2 className="font-semibold">Deine Bestellung ist bestätigt</h2>
 					<p className="mt-1 break-words text-sm text-muted-foreground">
-						You&apos;ll receive a confirmation email at {email}
+						Du erhältst eine Bestätigungs-E-Mail an {email}
 					</p>
 				</div>
 
@@ -77,7 +77,7 @@ export const ConfirmationStep: FC<ConfirmationStepProps> = ({ checkout }) => {
 					<div className="flex items-start gap-3">
 						<Mail className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 						<div className="min-w-0 flex-1">
-							<p className="text-sm font-medium">Confirmation email sent</p>
+							<p className="text-sm font-medium">Bestätigungs-E-Mail wurde gesendet</p>
 							<p className="break-words text-sm text-muted-foreground">{email}</p>
 						</div>
 					</div>
@@ -85,7 +85,7 @@ export const ConfirmationStep: FC<ConfirmationStepProps> = ({ checkout }) => {
 						<div className="flex items-start gap-3">
 							<MapPin className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 							<div className="min-w-0 flex-1">
-								<p className="text-sm font-medium">Shipping address</p>
+								<p className="text-sm font-medium">Versandadresse</p>
 								<p className="break-words text-sm text-muted-foreground">{formatAddress(shippingAddress)}</p>
 							</div>
 						</div>
@@ -94,7 +94,7 @@ export const ConfirmationStep: FC<ConfirmationStepProps> = ({ checkout }) => {
 						<div className="flex items-start gap-3">
 							<CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 							<div className="min-w-0 flex-1">
-								<p className="text-sm font-medium">Billing address</p>
+								<p className="text-sm font-medium">Rechnungsadresse</p>
 								<p className="break-words text-sm text-muted-foreground">{formatAddress(billingAddress)}</p>
 							</div>
 						</div>
@@ -102,7 +102,7 @@ export const ConfirmationStep: FC<ConfirmationStepProps> = ({ checkout }) => {
 					<div className="flex items-start gap-3">
 						<Package className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 						<div className="min-w-0 flex-1">
-							<p className="text-sm font-medium">Estimated delivery</p>
+							<p className="text-sm font-medium">Voraussichtliche Lieferung</p>
 							<p className="text-sm text-muted-foreground">{formattedDelivery}</p>
 						</div>
 					</div>
@@ -115,7 +115,7 @@ export const ConfirmationStep: FC<ConfirmationStepProps> = ({ checkout }) => {
 					href={`/${channel}`}
 					className="inline-flex h-12 flex-1 items-center justify-center rounded-md border border-input bg-transparent px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
 				>
-					Continue shopping
+					Weiter einkaufen
 				</Link>
 			</div>
 		</div>

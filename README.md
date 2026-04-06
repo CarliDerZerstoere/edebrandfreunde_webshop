@@ -421,6 +421,31 @@ cp -r .next/static .next/standalone/.next/static
 sudo systemctl restart saleor-storefront
 ```
 
+### Webhook Cache-Invalidierung einrichten (optional)
+
+Damit Änderungen im Saleor Dashboard sofort auf der Website erscheinen:
+
+```bash
+# 1. Secrets generieren
+openssl rand -hex 32  # → REVALIDATE_SECRET
+
+# 2. In die systemd Service-Datei eintragen
+sudo nano /etc/systemd/system/saleor-storefront.service
+# Unter [Service] hinzufügen:
+#   Environment=REVALIDATE_SECRET=<dein-secret>
+#   Environment=NEXT_PUBLIC_STOREFRONT_URL=https://shop.edelbrandfreunde.at
+
+# 3. Service neu laden
+sudo systemctl daemon-reload
+sudo systemctl restart saleor-storefront
+
+# 4. Im Saleor Dashboard:
+#    Configuration → Webhooks → Neuen Webhook erstellen
+#    URL: https://shop.edelbrandfreunde.at/api/revalidate
+#    Secret Key: <das gleiche Secret wie oben>
+#    Events: Product Updated, Category Updated, Collection Updated, Page Updated
+```
+
 ---
 
 ## Dateien-Übersicht

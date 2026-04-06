@@ -1,6 +1,6 @@
 {
-	"name": "Paper",
-	"short_name": "Paper",
+	"name": "Edelbrandfreunde",
+	"short_name": "Edelbrandfreunde",
 	"icons": [
 		{
 			"src": "/android-chrome-192x192.png",
@@ -13,7 +13,7 @@
 			"type": "image/png"
 		}
 	],
-	"theme_color": "#FAF9F7",
-	"background_color": "#FAF9F7",
+	"theme_color": "#F7F3EC",
+	"background_color": "#F7F3EC",
 	"display": "standalone"
 }

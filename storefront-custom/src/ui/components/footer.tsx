@@ -3,7 +3,6 @@ import { LinkWithChannel } from "../atoms/link-with-channel";
 import { ChannelSelect } from "./channel-select";
 import { ChannelsListDocument, MenuGetBySlugDocument } from "@/gql/graphql";
 import { executePublicGraphQL } from "@/lib/graphql";
-import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
 import { CopyrightText } from "./copyright-text";
 import { Logo } from "./shared/logo";
 
@@ -23,11 +22,8 @@ const defaultFooterLinks = {
 	],
 };
 
-/** Cached channels list - rarely changes */
+/** Channels list */
 async function getChannels() {
-	"use cache";
-	applyCacheProfile(CACHE_PROFILES.channels);
-
 	if (!process.env.SALEOR_APP_TOKEN) {
 		return null;
 	}
@@ -41,11 +37,8 @@ async function getChannels() {
 	return result.ok ? result.data : null;
 }
 
-/** Cached footer menu */
+/** Footer menu */
 async function getFooterMenu(channel: string) {
-	"use cache";
-	applyCacheProfile(CACHE_PROFILES.footerMenu);
-
 	const result = await executePublicGraphQL(MenuGetBySlugDocument, {
 		variables: { slug: "footer", channel },
 		revalidate: 60 * 60 * 24,
@@ -69,7 +62,7 @@ export async function Footer({ channel }: { channel: string }) {
 						<Link href={`/${channel}`} prefetch={false} className="mb-4 inline-block">
 							<Logo className="h-7 w-auto" inverted />
 						</Link>
-						<p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-400">
+						<p className="mt-4 max-w-xs text-sm leading-relaxed text-primary-foreground/60">
 							Feinste Edelbrände aus der Abfindungsbrennerei in Niederösterreich. Handgemacht mit Liebe zur Frucht.
 						</p>
 					</div>
@@ -77,7 +70,7 @@ export async function Footer({ channel }: { channel: string }) {
 					{/* Dynamic menu items from Saleor CMS */}
 					{menuItems.map((item) => (
 						<div key={item.id}>
-							<h4 className="mb-4 text-sm font-medium text-neutral-300">{item.name}</h4>
+							<h4 className="mb-4 text-sm font-medium text-primary-foreground/80">{item.name}</h4>
 							<ul className="space-y-3">
 								{item.children?.map((child) => {
 									if (child.category) {
@@ -86,7 +79,7 @@ export async function Footer({ channel }: { channel: string }) {
 												<LinkWithChannel
 													href={`/categories/${child.category.slug}`}
 													prefetch={false}
-													className="text-sm text-neutral-400 transition-all duration-300 hover:text-neutral-200 hover:translate-x-1"
+													className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
 												>
 													{child.category.name}
 												</LinkWithChannel>
@@ -99,7 +92,7 @@ export async function Footer({ channel }: { channel: string }) {
 												<LinkWithChannel
 													href={`/collections/${child.collection.slug}`}
 													prefetch={false}
-													className="text-sm text-neutral-400 transition-all duration-300 hover:text-neutral-200 hover:translate-x-1"
+													className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
 												>
 													{child.collection.name}
 												</LinkWithChannel>
@@ -112,7 +105,7 @@ export async function Footer({ channel }: { channel: string }) {
 												<LinkWithChannel
 													href={`/pages/${child.page.slug}`}
 													prefetch={false}
-													className="text-sm text-neutral-400 transition-all duration-300 hover:text-neutral-200 hover:translate-x-1"
+													className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
 												>
 													{child.page.title}
 												</LinkWithChannel>
@@ -125,7 +118,7 @@ export async function Footer({ channel }: { channel: string }) {
 												<Link
 													href={child.url}
 													prefetch={false}
-													className="text-sm text-neutral-400 transition-all duration-300 hover:text-neutral-200 hover:translate-x-1"
+													className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
 												>
 													{child.name}
 												</Link>
@@ -142,14 +135,14 @@ export async function Footer({ channel }: { channel: string }) {
 					{menuItems.length === 0 && (
 						<>
 							<div>
-								<h4 className="mb-4 text-sm font-medium text-neutral-300">Kundenservice</h4>
+								<h4 className="mb-4 text-sm font-medium text-primary-foreground/80">Kundenservice</h4>
 								<ul className="space-y-3">
 									{defaultFooterLinks.support.map((link) => (
 										<li key={link.href}>
 											<Link
 												href={link.href}
 												prefetch={false}
-												className="text-sm text-neutral-400 transition-all duration-300 hover:text-neutral-200 hover:translate-x-1"
+												className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
 											>
 												{link.label}
 											</Link>
@@ -158,14 +151,14 @@ export async function Footer({ channel }: { channel: string }) {
 								</ul>
 							</div>
 							<div>
-								<h4 className="mb-4 text-sm font-medium text-neutral-300">Edelbrandfreunde</h4>
+								<h4 className="mb-4 text-sm font-medium text-primary-foreground/80">Edelbrandfreunde</h4>
 								<ul className="space-y-3">
 									{defaultFooterLinks.company.map((link) => (
 										<li key={link.href}>
 											<Link
 												href={link.href}
 												prefetch={false}
-												className="text-sm text-neutral-400 transition-all duration-300 hover:text-neutral-200 hover:translate-x-1"
+												className="text-sm text-primary-foreground/60 transition-all duration-300 hover:text-primary-foreground hover:translate-x-1"
 											>
 												{link.label}
 											</Link>
@@ -179,7 +172,7 @@ export async function Footer({ channel }: { channel: string }) {
 
 				{/* Channel selector */}
 				{channels?.channels && (
-					<div className="mt-8 text-neutral-400">
+					<div className="mt-8 text-primary-foreground/60">
 						<label className="flex items-center gap-2 text-sm">
 							<span>Währung:</span>
 							<ChannelSelect channels={channels.channels} />
@@ -192,21 +185,21 @@ export async function Footer({ channel }: { channel: string }) {
 					<div className="h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
 				</div>
 				<div className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
-					<p className="text-xs text-neutral-500">
+					<p className="text-xs text-primary-foreground/40">
 						<CopyrightText />
 					</p>
 					<div className="flex items-center gap-6">
 						<LinkWithChannel
 							href="/pages/datenschutz"
 							prefetch={false}
-							className="text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+							className="text-xs text-primary-foreground/40 transition-colors hover:text-primary-foreground/80"
 						>
 							Datenschutz
 						</LinkWithChannel>
 						<LinkWithChannel
 							href="/pages/agb"
 							prefetch={false}
-							className="text-xs text-neutral-500 transition-colors hover:text-neutral-300"
+							className="text-xs text-primary-foreground/40 transition-colors hover:text-primary-foreground/80"
 						>
 							AGB
 						</LinkWithChannel>

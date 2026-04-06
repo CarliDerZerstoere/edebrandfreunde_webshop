@@ -8,7 +8,6 @@ import xss from "xss";
 import { executePublicGraphQL } from "@/lib/graphql";
 import { ProductDetailsDocument, type ProductDetailsQuery } from "@/gql/graphql";
 import { buildPageMetadata, buildProductJsonLd } from "@/lib/seo";
-import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
 import { Breadcrumbs } from "@/ui/components/breadcrumbs";
 import {
 	ProductGallery,
@@ -23,9 +22,6 @@ import {
 // ============================================================================
 
 async function getProductData(slug: string, channel: string) {
-	"use cache";
-	applyCacheProfile(CACHE_PROFILES.products, slug);
-
 	const result = await executePublicGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: decodeURIComponent(slug),
@@ -53,7 +49,7 @@ export async function generateMetadata(props: {
 	const product = await getProductData(params.slug, params.channel);
 
 	if (!product) {
-		return { title: "Product Not Found" };
+		return { title: "Produkt nicht gefunden" };
 	}
 
 	const description = product.seoDescription || product.name;

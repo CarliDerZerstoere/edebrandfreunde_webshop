@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 interface MarqueeBannerProps {
 	/**
@@ -24,11 +24,6 @@ const DEFAULT_ITEMS = [
 	"Handverlesene Früchte",
 	"Österreichische Qualität",
 ];
-
-function getReducedMotion(): boolean {
-	if (typeof window === "undefined") return false;
-	return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 /* ---- Sub-components defined outside render scope ---- */
 
@@ -74,15 +69,7 @@ export function MarqueeBanner({
 	speed = 38,
 	className = "",
 }: MarqueeBannerProps) {
-	// Lazy initialiser reads media query once during first render on client.
-	const [prefersReduced, setPrefersReduced] = useState<boolean>(getReducedMotion);
-
-	useEffect(() => {
-		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-		const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
-		mq.addEventListener("change", handler);
-		return () => mq.removeEventListener("change", handler);
-	}, []);
+	const prefersReduced = useReducedMotion();
 
 	if (prefersReduced) {
 		return (

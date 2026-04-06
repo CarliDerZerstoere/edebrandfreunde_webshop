@@ -8,6 +8,8 @@ storefront/
 
 # Backups
 storefront-backup/
+*.sql.gz
+*.sql
 
 # Storefront-Custom Build-Artefakte (Source wird committet, Builds nicht)
 storefront-custom/node_modules/

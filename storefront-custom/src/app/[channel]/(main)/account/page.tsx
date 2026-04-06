@@ -26,19 +26,19 @@ export default async function AccountOverviewPage() {
 	return (
 		<div className="space-y-8">
 			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">Welcome back, {displayName}</h1>
-				<p className="mt-1 text-sm text-muted-foreground">Here is an overview of your account activity.</p>
+				<h1 className="text-2xl font-semibold tracking-tight">Willkommen zurück, {displayName}</h1>
+				<p className="mt-1 text-sm text-muted-foreground">Hier ist eine Übersicht Ihrer Kontoaktivität.</p>
 			</div>
 
 			<section>
 				<div className="mb-4 flex items-center justify-between">
-					<h2 className="text-lg font-semibold">Recent Orders</h2>
+					<h2 className="text-lg font-semibold">Letzte Bestellungen</h2>
 					{orders.length > 0 && (
 						<LinkWithChannel
 							href={accountRoutes.orders}
 							className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
 						>
-							View all
+							Alle anzeigen
 							<ChevronRight className="h-4 w-4" />
 						</LinkWithChannel>
 					)}
@@ -46,7 +46,7 @@ export default async function AccountOverviewPage() {
 
 				{orders.length === 0 ? (
 					<div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-						You haven&apos;t placed any orders yet.
+						Sie haben noch keine Bestellungen aufgegeben.
 					</div>
 				) : (
 					<div className="space-y-2">
@@ -59,12 +59,12 @@ export default async function AccountOverviewPage() {
 
 			<section>
 				<div className="mb-4 flex items-center justify-between">
-					<h2 className="text-lg font-semibold">Default Address</h2>
+					<h2 className="text-lg font-semibold">Standardadresse</h2>
 					<LinkWithChannel
 						href={accountRoutes.addresses}
 						className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
 					>
-						Manage
+						Verwalten
 						<ChevronRight className="h-4 w-4" />
 					</LinkWithChannel>
 				</div>
@@ -73,7 +73,7 @@ export default async function AccountOverviewPage() {
 					<AccountAddressCard address={defaultAddress} isDefaultShipping />
 				) : (
 					<div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-						No addresses saved yet.
+						Noch keine Adressen gespeichert.
 					</div>
 				)}
 			</section>

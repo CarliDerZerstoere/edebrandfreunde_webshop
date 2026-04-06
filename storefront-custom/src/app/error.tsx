@@ -25,7 +25,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
 	// Extract error info
 	const saleorError = error as SaleorError;
 	const isRetryable = saleorError.isRetryable ?? true;
-	const userMessage = saleorError.userMessage ?? "Something went wrong loading this page.";
+	const userMessage = saleorError.userMessage ?? "Beim Laden dieser Seite ist ein Fehler aufgetreten.";
 
 	// Determine icon and action based on error type
 	const errorType = saleorError.type ?? "unknown";
@@ -69,7 +69,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
 						}`}
 					>
 						<Home className="h-4 w-4" />
-						Go Home
+						Zur Startseite
 					</Link>
 				</div>
 

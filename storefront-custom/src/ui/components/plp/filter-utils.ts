@@ -239,13 +239,13 @@ export function buildActiveFilters(filters: {
 	});
 
 	filters.sizes?.forEach((size) => {
-		active.push({ key: "size", label: "Size", value: size });
+		active.push({ key: "size", label: "Größe", value: size });
 	});
 
 	if (filters.priceRange) {
 		const [min, max] = filters.priceRange.split("-");
 		const label = max ? `$${min} - $${max}` : `$${min}+`;
-		active.push({ key: "price", label: "Price", value: label });
+		active.push({ key: "price", label: "Preis", value: label });
 	}
 
 	return active;

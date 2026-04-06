@@ -62,7 +62,7 @@ async function OrderDetailContent({ params }: Props) {
 				<div>
 					<h1 className="text-2xl font-semibold tracking-tight">ORD-{order.number}</h1>
 					<p className="mt-1 text-sm text-muted-foreground">
-						Placed on {formatDate(new Date(order.created))}
+						Aufgegeben am {formatDate(new Date(order.created))}
 					</p>
 				</div>
 				<OrderStatusBadge status={order.status} statusDisplay={order.statusDisplay} />
@@ -72,7 +72,7 @@ async function OrderDetailContent({ params }: Props) {
 				<div className="space-y-6">
 					<div className="rounded-xl border">
 						<div className="border-b px-5 py-4">
-							<h2 className="text-sm font-semibold">Items ({itemCount})</h2>
+							<h2 className="text-sm font-semibold">Artikel ({itemCount})</h2>
 						</div>
 						<div className="divide-y">
 							{order.lines.map((line) => {
@@ -105,7 +105,7 @@ async function OrderDetailContent({ params }: Props) {
 											{line.variant.name !== line.variant.id && Boolean(line.variant.name) && (
 												<p className="text-[13px] text-muted-foreground">{line.variant.name}</p>
 											)}
-											<p className="text-[13px] text-muted-foreground">Qty: {line.quantity}</p>
+											<p className="text-[13px] text-muted-foreground">Menge: {line.quantity}</p>
 										</div>
 										{lineTotal != null && currency && (
 											<span className="text-sm font-medium tabular-nums">
@@ -120,29 +120,29 @@ async function OrderDetailContent({ params }: Props) {
 						<div className="border-t px-5 py-4">
 							<dl className="space-y-2 text-sm">
 								<div className="flex justify-between">
-									<dt className="text-muted-foreground">Subtotal</dt>
+									<dt className="text-muted-foreground">Zwischensumme</dt>
 									<dd className="tabular-nums">
 										{formatMoney(order.subtotal.gross.amount, order.subtotal.gross.currency)}
 									</dd>
 								</div>
 								<div className="flex justify-between">
-									<dt className="text-muted-foreground">Shipping</dt>
+									<dt className="text-muted-foreground">Versand</dt>
 									<dd className="tabular-nums">
 										{order.shippingPrice.gross.amount === 0
-											? "Free"
+											? "Kostenlos"
 											: formatMoney(order.shippingPrice.gross.amount, order.shippingPrice.gross.currency)}
 									</dd>
 								</div>
 								{order.total.tax.amount > 0 && (
 									<div className="flex justify-between">
-										<dt className="text-muted-foreground">Tax</dt>
+										<dt className="text-muted-foreground">MwSt.</dt>
 										<dd className="tabular-nums">
 											{formatMoney(order.total.tax.amount, order.total.tax.currency)}
 										</dd>
 									</div>
 								)}
 								<div className="flex justify-between border-t pt-2 font-semibold">
-									<dt>Total</dt>
+									<dt>Gesamt</dt>
 									<dd className="tabular-nums">
 										{formatMoney(order.total.gross.amount, order.total.gross.currency)}
 									</dd>
@@ -155,16 +155,16 @@ async function OrderDetailContent({ params }: Props) {
 				</div>
 
 				<div className="space-y-4">
-					{order.shippingAddress && <OrderAddress title="Shipping Address" address={order.shippingAddress} />}
-					{order.billingAddress && <OrderAddress title="Billing Address" address={order.billingAddress} />}
+					{order.shippingAddress && <OrderAddress title="Lieferadresse" address={order.shippingAddress} />}
+					{order.billingAddress && <OrderAddress title="Rechnungsadresse" address={order.billingAddress} />}
 
 					{order.isPaid && (
 						<div className="rounded-xl border px-5 py-4">
-							<h3 className="mb-3 text-sm font-semibold">Payment Method</h3>
+							<h3 className="mb-3 text-sm font-semibold">Zahlungsmethode</h3>
 							<div className="flex items-center gap-3">
 								<CreditCard className="h-4 w-4 text-muted-foreground" />
 								<span className="text-sm">
-									{order.paymentStatus === "FULLY_CHARGED" ? "Paid" : order.paymentStatus}
+									{order.paymentStatus === "FULLY_CHARGED" ? "Bezahlt" : order.paymentStatus}
 								</span>
 							</div>
 						</div>

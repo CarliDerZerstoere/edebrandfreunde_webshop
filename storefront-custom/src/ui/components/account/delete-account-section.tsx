@@ -30,9 +30,9 @@ export function DeleteAccountSection() {
 
 	if (sent) {
 		return (
-			<div aria-live="polite" className="rounded-lg border border-border bg-green-50 p-4">
-				<p className="text-sm text-green-800">
-					A confirmation email has been sent. Please check your inbox to complete account deletion.
+			<div aria-live="polite" className="rounded-lg border border-border bg-accent/5 p-4">
+				<p className="text-sm text-accent">
+					Eine Bestätigungs-E-Mail wurde gesendet. Bitte prüfen Sie Ihren Posteingang, um die Kontolöschung abzuschließen.
 				</p>
 			</div>
 		);
@@ -41,9 +41,9 @@ export function DeleteAccountSection() {
 	return (
 		<div className="space-y-3">
 			<div>
-				<p className="text-sm font-medium text-destructive">Delete account</p>
+				<p className="text-sm font-medium text-destructive">Konto löschen</p>
 				<p className="text-sm text-muted-foreground">
-					Permanently remove your account and all associated data.
+					Konto und alle zugehörigen Daten dauerhaft entfernen.
 				</p>
 			</div>
 
@@ -55,22 +55,21 @@ export function DeleteAccountSection() {
 
 			{!showConfirm ? (
 				<Button variant="destructive" size="sm" onClick={() => setShowConfirm(true)}>
-					Delete account
+					Konto löschen
 				</Button>
 			) : (
 				<div className="border-destructive/20 bg-destructive/5 flex items-start gap-3 rounded-lg border p-4">
 					<AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
 					<div className="space-y-3">
 						<p className="text-sm">
-							This action cannot be undone. You will receive a confirmation email before your account is
-							deleted.
+							Diese Aktion kann nicht rückgängig gemacht werden. Sie erhalten eine Bestätigungs-E-Mail, bevor Ihr Konto gelöscht wird.
 						</p>
 						<div className="flex gap-2">
 							<Button variant="destructive" size="sm" onClick={handleDelete} disabled={isPending}>
-								{isPending ? "Sending…" : "Yes, delete my account"}
+								{isPending ? "Wird gesendet…" : "Ja, mein Konto löschen"}
 							</Button>
 							<Button variant="ghost" size="sm" onClick={() => setShowConfirm(false)}>
-								Cancel
+								Abbrechen
 							</Button>
 						</div>
 					</div>

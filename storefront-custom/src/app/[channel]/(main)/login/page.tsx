@@ -7,8 +7,8 @@ import { CurrentUserDocument } from "@/gql/graphql";
 import { AuthProvider } from "@/lib/auth";
 
 export const metadata = {
-	title: "Sign In",
-	description: "Sign in to your account to access your orders and saved addresses.",
+	title: "Anmelden · Edelbrandfreunde",
+	description: "Melde dich in deinem Konto an, um auf deine Bestellungen und gespeicherten Adressen zuzugreifen.",
 };
 
 export default function LoginPage(props: { params: Promise<{ channel: string }> }) {

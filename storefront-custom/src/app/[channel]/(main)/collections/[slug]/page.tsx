@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
 import { ProductListByCollectionDocument, ProductOrderField, OrderDirection } from "@/gql/graphql";
 import { executePublicGraphQL } from "@/lib/graphql";
-import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
 import { getPaginatedListVariables } from "@/lib/utils";
 import { parseEditorJSToText } from "@/lib/editorjs";
 import { CategoryHero, transformToProductCard } from "@/ui/components/plp";
@@ -11,9 +10,6 @@ import { buildSortVariables, buildFilterVariables } from "@/ui/components/plp/fi
 import { CollectionPageClient } from "./client";
 
 async function getCollectionData(slug: string, channel: string) {
-	"use cache";
-	applyCacheProfile(CACHE_PROFILES.collections, slug);
-
 	const result = await executePublicGraphQL(ProductListByCollectionDocument, {
 		variables: { slug, channel, first: 1 },
 		revalidate: 300,
@@ -45,7 +41,7 @@ export const generateMetadata = async (props: PageProps, parent: ResolvingMetada
 	const plainDescription = parseEditorJSToText(collection?.description);
 
 	return {
-		title: `${collection?.name || "Collection"} | ${collection?.seoTitle || (await parent).title?.absolute}`,
+		title: `${collection?.name || "Kollektion"} | ${collection?.seoTitle || (await parent).title?.absolute}`,
 		description: collection?.seoDescription || plainDescription || collection?.seoTitle || collection?.name,
 	};
 };

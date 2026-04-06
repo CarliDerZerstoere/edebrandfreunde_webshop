@@ -48,7 +48,7 @@ export async function VariantSectionDynamic({ product, channel, searchParams }: 
 	// Format prices
 	const price = selectedVariant?.pricing?.price?.gross
 		? selectedVariant.pricing.price.gross.amount === 0
-			? "FREE"
+			? "GRATIS"
 			: formatMoney(selectedVariant.pricing.price.gross.amount, selectedVariant.pricing.price.gross.currency)
 		: formatMoneyRange({
 				start: product.pricing?.priceRange?.start?.gross,
@@ -119,12 +119,12 @@ export async function VariantSectionDynamic({ product, channel, searchParams }: 
 				{product.category && <span className="text-sm text-muted-foreground">{product.category.name}</span>}
 				{isOnSale && (
 					<Badge variant="destructive" className="text-xs">
-						Sale
+						Aktion
 					</Badge>
 				)}
 				{!isAvailable && (
 					<Badge variant="secondary" className="text-xs">
-						Out of stock
+						Ausverkauft
 					</Badge>
 				)}
 			</div>

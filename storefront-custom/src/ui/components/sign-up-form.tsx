@@ -30,17 +30,17 @@ export function SignUpForm() {
 
 		// Validation
 		if (!email || !validateEmail(email)) {
-			setError("Please enter a valid email address");
+			setError("Bitte gib eine gültige E-Mail-Adresse ein");
 			return;
 		}
 
 		if (password.length < 8) {
-			setError("Password must be at least 8 characters");
+			setError("Das Passwort muss mindestens 8 Zeichen lang sein");
 			return;
 		}
 
 		if (password !== confirmPassword) {
-			setError("Passwords do not match");
+			setError("Passwörter stimmen nicht überein");
 			return;
 		}
 
@@ -69,9 +69,9 @@ export function SignUpForm() {
 			if (data.errors?.length) {
 				const err = data.errors[0];
 				if (err.code === "UNIQUE") {
-					setError("An account with this email already exists. Please sign in instead.");
+					setError("Ein Konto mit dieser E-Mail-Adresse existiert bereits. Bitte melde dich an.");
 				} else {
-					setError(err.message || "Failed to create account");
+					setError(err.message || "Konto konnte nicht erstellt werden");
 				}
 				return;
 			}
@@ -79,7 +79,7 @@ export function SignUpForm() {
 			// Success - show confirmation message
 			setSuccess(true);
 		} catch {
-			setError("An error occurred. Please try again.");
+			setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -90,10 +90,10 @@ export function SignUpForm() {
 			<div className="mx-auto mt-16 w-full max-w-md">
 				<div className="rounded-lg border border-border bg-card p-8 shadow-sm">
 					<div className="text-center">
-						<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+						<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
 							<svg
 								aria-hidden="true"
-								className="h-6 w-6 text-green-600"
+								className="h-6 w-6 text-accent"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -101,13 +101,13 @@ export function SignUpForm() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
 							</svg>
 						</div>
-						<h2 className="text-xl font-semibold">Account Created!</h2>
-						<p className="mt-2 text-muted-foreground">Please check your email to verify your account.</p>
+						<h2 className="text-xl font-semibold">Konto erstellt!</h2>
+						<p className="mt-2 text-muted-foreground">Bitte überprüfe deine E-Mail, um dein Konto zu bestätigen.</p>
 						<Link
 							href={`/${params.channel}/login`}
 							className="mt-6 inline-block text-sm font-medium text-foreground underline underline-offset-2 hover:no-underline"
 						>
-							Go to Sign In
+							Zur Anmeldung
 						</Link>
 					</div>
 				</div>
@@ -119,14 +119,14 @@ export function SignUpForm() {
 		<div className="mx-auto mt-16 w-full max-w-md">
 			<div className="rounded-lg border border-border bg-card p-8 shadow-sm">
 				<div className="mb-6 text-center">
-					<h1 className="text-2xl font-semibold">Create an Account</h1>
+					<h1 className="text-2xl font-semibold">Konto erstellen</h1>
 					<p className="mt-2 text-sm text-muted-foreground">
-						Already have an account?{" "}
+						Bereits ein Konto?{" "}
 						<Link
 							href={`/${params.channel}/login`}
 							className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
 						>
-							Sign in
+							Anmelden
 						</Link>
 					</p>
 				</div>
@@ -142,14 +142,14 @@ export function SignUpForm() {
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-1.5">
 							<Label htmlFor="firstName" className="text-sm font-medium">
-								First name
+								Vorname
 							</Label>
 							<div className="relative">
 								<User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 								<Input
 									id="firstName"
 									type="text"
-									placeholder="First name"
+									placeholder="Vorname"
 									autoComplete="given-name"
 									value={firstName}
 									onChange={(e) => setFirstName(e.target.value)}
@@ -159,12 +159,12 @@ export function SignUpForm() {
 						</div>
 						<div className="space-y-1.5">
 							<Label htmlFor="lastName" className="text-sm font-medium">
-								Last name
+								Nachname
 							</Label>
 							<Input
 								id="lastName"
 								type="text"
-								placeholder="Last name"
+								placeholder="Nachname"
 								autoComplete="family-name"
 								value={lastName}
 								onChange={(e) => setLastName(e.target.value)}
@@ -176,7 +176,7 @@ export function SignUpForm() {
 					{/* Email */}
 					<div className="space-y-1.5">
 						<Label htmlFor="email" className="text-sm font-medium">
-							Email address
+							E-Mail-Adresse
 						</Label>
 						<div className="relative">
 							<Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -197,14 +197,14 @@ export function SignUpForm() {
 					{/* Password */}
 					<div className="space-y-1.5">
 						<Label htmlFor="password" className="text-sm font-medium">
-							Password
+							Passwort
 						</Label>
 						<div className="relative">
 							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								id="password"
 								type={showPassword ? "text" : "password"}
-								placeholder="Minimum 8 characters…"
+								placeholder="Mindestens 8 Zeichen…"
 								autoComplete="new-password"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
@@ -215,7 +215,7 @@ export function SignUpForm() {
 							<button
 								type="button"
 								onClick={() => setShowPassword(!showPassword)}
-								aria-label={showPassword ? "Hide password" : "Show password"}
+								aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
 								{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -226,14 +226,14 @@ export function SignUpForm() {
 					{/* Confirm Password */}
 					<div className="space-y-1.5">
 						<Label htmlFor="confirmPassword" className="text-sm font-medium">
-							Confirm password
+							Passwort bestätigen
 						</Label>
 						<div className="relative">
 							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								id="confirmPassword"
 								type={showPassword ? "text" : "password"}
-								placeholder="Re-enter your password"
+								placeholder="Passwort erneut eingeben"
 								autoComplete="new-password"
 								value={confirmPassword}
 								onChange={(e) => setConfirmPassword(e.target.value)}
@@ -245,23 +245,24 @@ export function SignUpForm() {
 							/>
 						</div>
 						{confirmPassword && password !== confirmPassword && (
-							<p className="text-sm text-destructive">Passwords do not match</p>
+							<p className="text-sm text-destructive">Passwörter stimmen nicht überein</p>
 						)}
 					</div>
 
 					<Button type="submit" disabled={isSubmitting} className="h-12 w-full text-base font-semibold">
-						{isSubmitting ? "Creating account…" : "Create Account"}
+						{isSubmitting ? "Konto wird erstellt…" : "Konto erstellen"}
 					</Button>
 
 					<p className="text-center text-xs text-muted-foreground">
-						By creating an account, you agree to our{" "}
-						<Link href="#" className="underline hover:no-underline">
-							Terms of Service
+						Mit der Erstellung eines Kontos stimmst du unseren{" "}
+						<Link href="/oe/pages/agb" className="underline hover:no-underline">
+							AGB
 						</Link>{" "}
-						and{" "}
-						<Link href="#" className="underline hover:no-underline">
-							Privacy Policy
-						</Link>
+						und der{" "}
+						<Link href="/oe/pages/datenschutz" className="underline hover:no-underline">
+							Datenschutzerklärung
+						</Link>{" "}
+						zu
 					</p>
 				</form>
 			</div>

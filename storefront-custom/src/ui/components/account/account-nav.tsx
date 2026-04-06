@@ -15,10 +15,10 @@ const navItems: ReadonlyArray<{
 	icon: typeof LayoutGrid;
 	exact?: boolean;
 }> = [
-	{ href: accountRoutes.overview, label: "Overview", icon: LayoutGrid, exact: true },
-	{ href: accountRoutes.orders, label: "Orders", icon: Receipt },
-	{ href: accountRoutes.addresses, label: "Addresses", icon: MapPin },
-	{ href: accountRoutes.settings, label: "Settings", icon: Settings },
+	{ href: accountRoutes.overview, label: "Übersicht", icon: LayoutGrid, exact: true },
+	{ href: accountRoutes.orders, label: "Bestellungen", icon: Receipt },
+	{ href: accountRoutes.addresses, label: "Adressen", icon: MapPin },
+	{ href: accountRoutes.settings, label: "Einstellungen", icon: Settings },
 ];
 
 export function AccountNav() {
@@ -46,7 +46,7 @@ export function AccountNav() {
 				className="mb-8 inline-flex items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
 			>
 				<span className="text-base leading-none">&lsaquo;</span>
-				Back to store
+				Zurück zum Shop
 			</LinkWithChannel>
 
 			<div className="mb-8 hidden md:block">
@@ -98,7 +98,7 @@ export function AccountNav() {
 						className="flex items-center gap-3 px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
 					>
 						<ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.75} />
-						Sign out
+						Abmelden
 					</button>
 				</form>
 			</div>

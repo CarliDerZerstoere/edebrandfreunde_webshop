@@ -13,24 +13,24 @@ type TimelineEvent = {
 };
 
 const fulfillmentLabels: Record<FulfillmentStatus, { label: string; description: string }> = {
-	[FulfillmentStatus.Fulfilled]: { label: "Shipped", description: "Your order has been shipped" },
+	[FulfillmentStatus.Fulfilled]: { label: "Versendet", description: "Ihre Bestellung wurde versendet" },
 	[FulfillmentStatus.Canceled]: {
-		label: "Fulfillment cancelled",
-		description: "Shipment was cancelled",
+		label: "Versand storniert",
+		description: "Der Versand wurde storniert",
 	},
-	[FulfillmentStatus.Refunded]: { label: "Refunded", description: "Payment has been refunded" },
+	[FulfillmentStatus.Refunded]: { label: "Erstattet", description: "Die Zahlung wurde erstattet" },
 	[FulfillmentStatus.RefundedAndReturned]: {
-		label: "Refunded & Returned",
-		description: "Items returned and refunded",
+		label: "Erstattet & Zurückgegeben",
+		description: "Artikel zurückgegeben und erstattet",
 	},
 	[FulfillmentStatus.Replaced]: {
-		label: "Replaced",
-		description: "Items have been replaced",
+		label: "Ersetzt",
+		description: "Artikel wurden ersetzt",
 	},
-	[FulfillmentStatus.Returned]: { label: "Returned", description: "Items have been returned" },
+	[FulfillmentStatus.Returned]: { label: "Zurückgegeben", description: "Artikel wurden zurückgegeben" },
 	[FulfillmentStatus.WaitingForApproval]: {
-		label: "Awaiting approval",
-		description: "Fulfillment is pending approval",
+		label: "Wartet auf Genehmigung",
+		description: "Versand wartet auf Genehmigung",
 	},
 };
 
@@ -38,8 +38,8 @@ function buildTimeline(order: OrderFullDetailsFragment): TimelineEvent[] {
 	const events: TimelineEvent[] = [];
 
 	events.push({
-		label: "Order confirmed",
-		description: "Payment confirmed and order placed",
+		label: "Bestellung bestätigt",
+		description: "Zahlung bestätigt und Bestellung aufgegeben",
 		date: new Date(order.created),
 		isCurrent: false,
 	});
@@ -52,7 +52,7 @@ function buildTimeline(order: OrderFullDetailsFragment): TimelineEvent[] {
 		const itemCount = fulfillment.lines?.reduce((sum, l) => sum + l.quantity, 0) ?? 0;
 		const description =
 			itemCount > 0
-				? `${config.description} (${itemCount} item${itemCount === 1 ? "" : "s"})`
+				? `${config.description} (${itemCount} Artikel)`
 				: config.description;
 
 		events.push({
@@ -64,8 +64,8 @@ function buildTimeline(order: OrderFullDetailsFragment): TimelineEvent[] {
 
 		if (fulfillment.trackingNumber) {
 			events.push({
-				label: "Tracking updated",
-				description: `Tracking number: ${fulfillment.trackingNumber}`,
+				label: "Sendungsverfolgung aktualisiert",
+				description: `Sendungsnummer: ${fulfillment.trackingNumber}`,
 				date: new Date(fulfillment.created),
 				isCurrent: false,
 			});
@@ -89,7 +89,7 @@ export function OrderTimeline({ order }: Props) {
 	return (
 		<div className="rounded-xl border">
 			<div className="border-b px-5 py-4">
-				<h2 className="text-sm font-semibold">Order Timeline</h2>
+				<h2 className="text-sm font-semibold">Bestellverlauf</h2>
 			</div>
 			<div className="px-5 py-4">
 				<ol className="relative ml-3 border-l border-border">

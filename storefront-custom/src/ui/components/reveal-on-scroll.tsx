@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger as _ST } from "@/lib/gsap";
 // ScrollTrigger must be imported to register the plugin — used by gsap.fromTo scrollTrigger config
 void _ST;
@@ -52,7 +52,7 @@ export function RevealOnScroll({
 	const ref = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
 
-	useLayoutEffect(() => {
+	useEffect(() => {
 		if (prefersReduced) return;
 
 		const el = ref.current;
@@ -95,7 +95,7 @@ export function RevealOnScroll({
 
 	const El = Tag as React.ElementType;
 	return (
-		<El ref={ref} className={className} style={prefersReduced ? {} : { visibility: "hidden" }}>
+		<El ref={ref} className={className}>
 			{children}
 		</El>
 	);

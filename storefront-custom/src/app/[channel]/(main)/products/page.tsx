@@ -9,8 +9,8 @@ import { resolveCategorySlugsToIds } from "@/ui/components/plp/filter-utils.serv
 import { ProductsPageClient } from "./products-client";
 
 export const metadata = {
-	title: "Products · Saleor Storefront example",
-	description: "All products in Saleor Storefront example",
+	title: "Alle Produkte · Edelbrandfreunde",
+	description: "Entdecke unser gesamtes Sortiment an handgemachten Edelbränden aus Niederösterreich.",
 };
 
 type PageProps = {
@@ -35,15 +35,15 @@ export default async function Page(props: PageProps) {
 
 	const breadcrumbs = [
 		{ label: "Home", href: `/${params.channel}` },
-		{ label: "Products", href: `/${params.channel}/products` },
+		{ label: "Alle Produkte", href: `/${params.channel}/products` },
 	];
 
 	return (
 		<>
 			{/* Static shell - renders immediately */}
 			<CategoryHero
-				title="All Products"
-				description="Discover our full collection of premium products."
+				title="Alle Produkte"
+				description="Entdecke unser gesamtes Sortiment an handgemachten Edelbränden."
 				breadcrumbs={breadcrumbs}
 			/>
 			{/* Dynamic content - streams in via Suspense */}

@@ -63,7 +63,7 @@ export function ProductAttributes({
 			{descriptionHtml && descriptionHtml.length > 0 && (
 				<AccordionItemWithContext value="description" className="border-border">
 					<AccordionTrigger className="py-4 text-sm font-medium hover:no-underline">
-						Description
+						Beschreibung
 					</AccordionTrigger>
 					<AccordionContent>
 						<div className="prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-foreground prose-strong:text-foreground">
@@ -78,7 +78,7 @@ export function ProductAttributes({
 			{displayAttributes.length > 0 && (
 				<AccordionItemWithContext value="details" className="border-border">
 					<AccordionTrigger className="py-4 text-sm font-medium hover:no-underline">
-						Product Details
+						Produktdetails
 					</AccordionTrigger>
 					<AccordionContent>
 						<div className="grid gap-3">
@@ -99,7 +99,7 @@ export function ProductAttributes({
 			{careInstructions && (
 				<AccordionItemWithContext value="care" className="border-border">
 					<AccordionTrigger className="py-4 text-sm font-medium hover:no-underline">
-						Care Instructions
+						Pflegehinweise
 					</AccordionTrigger>
 					<AccordionContent className="leading-relaxed text-muted-foreground">
 						{careInstructions}
@@ -109,11 +109,11 @@ export function ProductAttributes({
 
 			<AccordionItemWithContext value="shipping" className="border-border">
 				<AccordionTrigger className="py-4 text-sm font-medium hover:no-underline">
-					Shipping & Returns
+					Versand & Rückgabe
 				</AccordionTrigger>
 				<AccordionContent className="leading-relaxed text-muted-foreground">
-					<p className="mb-2">Free shipping on orders over €100. Standard delivery 3-5 business days.</p>
-					<p>Free returns within 30 days of purchase. Items must be unworn with tags attached.</p>
+					<p className="mb-2">Kostenloser Versand ab €100 Bestellwert. Standardlieferung 3–5 Werktage.</p>
+					<p>Kostenlose Rücksendung innerhalb von 30 Tagen nach dem Kauf. Artikel müssen ungetragen und mit Etiketten versehen sein.</p>
 				</AccordionContent>
 			</AccordionItemWithContext>
 		</Accordion>

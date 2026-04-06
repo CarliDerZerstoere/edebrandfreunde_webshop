@@ -34,15 +34,15 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
+				<h1 className="text-2xl font-semibold tracking-tight">Bestellungen</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					{totalCount === 0 ? "No orders yet" : `${totalCount} order${totalCount !== 1 ? "s" : ""}`}
+					{totalCount === 0 ? "Noch keine Bestellungen" : `${totalCount} Bestellung${totalCount !== 1 ? "en" : ""}`}
 				</p>
 			</div>
 
 			{orders.length === 0 ? (
 				<div className="rounded-lg border border-dashed p-8 text-center">
-					<p className="text-muted-foreground">You haven&apos;t placed any orders yet.</p>
+					<p className="text-muted-foreground">Sie haben noch keine Bestellungen aufgegeben.</p>
 				</div>
 			) : (
 				<>
@@ -55,7 +55,7 @@ export default async function AccountOrdersPage({ searchParams }: Props) {
 					{pageInfo?.hasNextPage && pageInfo.endCursor && (
 						<div className="flex justify-center pt-2">
 							<LinkWithChannel href={`${accountRoutes.orders}?after=${pageInfo.endCursor}`}>
-								<Button variant="outline-solid">Load more orders</Button>
+								<Button variant="outline-solid">Weitere Bestellungen laden</Button>
 							</LinkWithChannel>
 						</div>
 					)}

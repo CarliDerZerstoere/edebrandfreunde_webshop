@@ -75,7 +75,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 	const [sameAsBilling, setSameAsBilling] = useState(isShippingRequired && hasShippingAddress);
 	// Lazy initialization - complex object only created once on mount
 	const [billingData, setBillingData] = useState<BillingAddressData>(() => ({
-		countryCode: (checkout.billingAddress?.country?.code as CountryCode) || "US",
+		countryCode: (checkout.billingAddress?.country?.code as CountryCode) || "AT",
 		formData: {
 			firstName: checkout.billingAddress?.firstName || "",
 			lastName: checkout.billingAddress?.lastName || "",
@@ -95,7 +95,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 		if (billing) {
 			setBillingData((prev) => ({
 				...prev,
-				countryCode: (billing.country?.code as CountryCode) || "US",
+				countryCode: (billing.country?.code as CountryCode) || "AT",
 				formData: {
 					firstName: billing.firstName || "",
 					lastName: billing.lastName || "",
@@ -197,7 +197,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 						languageCode: localeConfig.graphqlLanguageCode,
 					});
 					if (result.error) {
-						setErrors({ streetAddress1: "Failed to update billing address" });
+						setErrors({ streetAddress1: "Rechnungsadresse konnte nicht aktualisiert werden" });
 						return;
 					}
 					const billingErrors = result.data?.checkoutBillingAddressUpdate?.errors;
@@ -205,7 +205,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 						const errorMap: Record<string, string> = {};
 						billingErrors.forEach((err) => {
 							const field = err.field || "streetAddress1";
-							errorMap[field] = err.message || "Invalid value";
+							errorMap[field] = err.message || "Ungültiger Wert";
 						});
 						setErrors(errorMap);
 						const firstField = Object.keys(errorMap)[0];
@@ -253,14 +253,14 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 					if (initResult.error) {
 						console.error("Payment initialization error:", initResult.error);
-						setErrors({ streetAddress1: "Payment failed. Please try again." });
+						setErrors({ streetAddress1: "Zahlung fehlgeschlagen. Bitte versuche es erneut." });
 						return;
 					}
 
 					const transactionErrors = initResult.data?.transactionInitialize?.errors;
 					if (transactionErrors?.length) {
 						console.error("Transaction errors:", transactionErrors);
-						setErrors({ streetAddress1: transactionErrors[0].message || "Payment failed" });
+						setErrors({ streetAddress1: transactionErrors[0].message || "Zahlung fehlgeschlagen" });
 						return;
 					}
 
@@ -271,7 +271,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 					if (completeResult.error) {
 						console.error("Checkout complete error:", completeResult.error);
-						setErrors({ streetAddress1: "Failed to complete order. Please try again." });
+						setErrors({ streetAddress1: "Bestellung konnte nicht abgeschlossen werden. Bitte versuche es erneut." });
 						return;
 					}
 
@@ -281,7 +281,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 						console.error("Checkout complete errors:", errorDetails, completeErrors);
 						// Show a more descriptive error
 						const firstError = completeErrors[0];
-						const errorMessage = firstError.message || firstError.code || "Failed to complete order";
+						const errorMessage = firstError.message || firstError.code || "Bestellung konnte nicht abgeschlossen werden";
 						setErrors({ payment: errorMessage });
 						return;
 					}
@@ -297,7 +297,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 					// No payment gateway configured
 					setErrors({
 						streetAddress1:
-							"No payment gateway configured. Please contact support or configure a payment app in Saleor.",
+							"Kein Zahlungsanbieter konfiguriert. Bitte kontaktiere den Support oder konfiguriere eine Zahlungs-App im Saleor Dashboard.",
 					});
 					return;
 				} else {
@@ -305,7 +305,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 					// For now, show an error
 					setErrors({
 						streetAddress1:
-							"This checkout UI currently only supports test payments. Please use the standard checkout for real payments.",
+							"Diese Checkout-Oberfläche unterstützt derzeit nur Testzahlungen. Bitte verwende den Standard-Checkout für echte Zahlungen.",
 					});
 					return;
 				}
@@ -340,9 +340,9 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 	const isLoading = isProcessing || isPaymentProcessing;
 	const buttonText = isLoading
 		? completeState.fetching
-			? "Creating order..."
-			: "Processing payment..."
-		: `Pay ${totalStr}`;
+			? "Bestellung wird erstellt..."
+			: "Zahlung wird verarbeitet..."
+		: `Jetzt bezahlen ${totalStr}`;
 
 	const isDisabled =
 		isLoading ||
@@ -359,10 +359,10 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				<div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
 					<AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
 					<div>
-						<p className="font-medium text-amber-800">No payment gateway configured</p>
+						<p className="font-medium text-amber-800">Kein Zahlungsanbieter konfiguriert</p>
 						<p className="mt-1 text-sm text-amber-700">
-							To accept payments, install a payment app (like Saleor Dummy Payment for testing, or
-							Stripe/Adyen for production) from the Saleor Dashboard.
+							Um Zahlungen zu akzeptieren, installiere eine Zahlungs-App (z.B. Saleor Dummy Payment zum
+							Testen oder Stripe/Adyen für den Produktivbetrieb) im Saleor Dashboard.
 						</p>
 					</div>
 				</div>
@@ -373,9 +373,9 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				<div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
 					<AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
 					<div>
-						<p className="font-medium text-blue-800">Test Mode</p>
+						<p className="font-medium text-blue-800">Testmodus</p>
 						<p className="mt-1 text-sm text-blue-700">
-							Using test payment gateway. No real charges will be made.
+							Testzahlungsanbieter aktiv. Es werden keine echten Zahlungen durchgeführt.
 						</p>
 					</div>
 				</div>
@@ -407,7 +407,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				<div className="border-destructive/50 bg-destructive/10 flex items-start gap-3 rounded-lg border p-4">
 					<AlertCircle className="h-5 w-5 flex-shrink-0 text-destructive" />
 					<div>
-						<p className="font-medium text-destructive">Payment failed</p>
+						<p className="font-medium text-destructive">Zahlung fehlgeschlagen</p>
 						<p className="text-destructive/80 text-sm">{errors.payment}</p>
 					</div>
 				</div>
@@ -421,7 +421,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 					className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
 				>
 					<ChevronLeft className="h-4 w-4" />
-					{isShippingRequired ? "Return to shipping" : "Return to information"}
+					{isShippingRequired ? "Zurück zum Versand" : "Zurück zu Kontaktdaten"}
 				</button>
 				<Button type="submit" disabled={isDisabled} className="hidden h-12 min-w-[200px] px-8 md:flex">
 					{isLoading ? (
@@ -443,7 +443,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				isLoading={isLoading}
 				disabled={isDisabled}
 				total={totalStr}
-				loadingText={completeState.fetching ? "Creating order..." : "Processing payment..."}
+				loadingText={completeState.fetching ? "Bestellung wird erstellt..." : "Zahlung wird verarbeitet..."}
 			/>
 		</form>
 	);

@@ -61,8 +61,8 @@ export const defaultStatusStyle: StatusConfig = {
 
 /** Customer-friendly overrides for Saleor's internal status labels. */
 export const customerStatusLabel: Partial<Record<OrderStatus, string>> = {
-	[OrderStatus.Unfulfilled]: "Processing",
-	[OrderStatus.Unconfirmed]: "Pending confirmation",
-	[OrderStatus.PartiallyFulfilled]: "Partially shipped",
-	[OrderStatus.Fulfilled]: "Delivered",
+	[OrderStatus.Unfulfilled]: "In Bearbeitung",
+	[OrderStatus.Unconfirmed]: "Bestätigung ausstehend",
+	[OrderStatus.PartiallyFulfilled]: "Teilweise versendet",
+	[OrderStatus.Fulfilled]: "Zugestellt",
 };

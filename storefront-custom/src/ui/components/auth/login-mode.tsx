@@ -29,12 +29,12 @@ export function LoginMode() {
 		setError("");
 
 		if (!email || !EMAIL_RE.test(email)) {
-			setError("Please enter a valid email address");
+			setError("Bitte gib eine gültige E-Mail-Adresse ein");
 			return;
 		}
 
 		if (!password) {
-			setError("Please enter your password");
+			setError("Bitte gib dein Passwort ein");
 			return;
 		}
 
@@ -50,8 +50,8 @@ export function LoginMode() {
 					err.message?.toLowerCase().includes("credentials");
 				setError(
 					isInvalidCredentials
-						? "Invalid email or password. Please try again."
-						: err.message || "Sign in failed",
+						? "Ungültige E-Mail-Adresse oder falsches Passwort. Bitte versuche es erneut."
+						: err.message || "Anmeldung fehlgeschlagen",
 				);
 				return;
 			}
@@ -61,7 +61,7 @@ export function LoginMode() {
 				router.refresh();
 			}
 		} catch {
-			setError("An error occurred. Please try again.");
+			setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -72,7 +72,7 @@ export function LoginMode() {
 		setResetMessage("");
 
 		if (!email || !EMAIL_RE.test(email)) {
-			setError("Please enter a valid email address first");
+			setError("Bitte gib zuerst eine gültige E-Mail-Adresse ein");
 			return;
 		}
 
@@ -95,16 +95,16 @@ export function LoginMode() {
 			};
 
 			if (data.errors?.length) {
-				setError(data.errors[0].message || "Failed to send reset link");
+				setError(data.errors[0].message || "Zurücksetzen-Link konnte nicht gesendet werden");
 				return;
 			}
 
 			setResetEmailSent(true);
 			setResetMessage(
-				`If an account exists for ${email}, a password reset link has been sent. Note: You can only request one reset link every 15 minutes.`,
+				`Falls ein Konto für ${email} existiert, wurde ein Passwort-Zurücksetzen-Link gesendet. Hinweis: Du kannst nur alle 15 Minuten einen neuen Link anfordern.`,
 			);
 		} catch {
-			setError("An error occurred. Please try again.");
+			setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -114,14 +114,14 @@ export function LoginMode() {
 		<div className="mx-auto my-16 w-full max-w-md">
 			<div className="rounded-lg border border-border bg-card p-8 shadow-sm">
 				<div className="mb-6 text-center">
-					<h1 className="text-2xl font-semibold">Welcome Back</h1>
+					<h1 className="text-2xl font-semibold">Willkommen zurück</h1>
 					<p className="mt-2 text-sm text-muted-foreground">
-						Don&apos;t have an account?{" "}
+						Noch kein Konto?{" "}
 						<Link
 							href={`/${params.channel}/signup`}
 							className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
 						>
-							Sign up
+							Registrieren
 						</Link>
 					</p>
 				</div>
@@ -134,14 +134,14 @@ export function LoginMode() {
 					)}
 
 					{resetMessage && (
-						<div aria-live="polite" className="rounded-md bg-green-100 p-3 text-sm text-green-800">
+						<div aria-live="polite" className="rounded-md bg-accent/10 p-3 text-sm text-accent">
 							{resetMessage}
 						</div>
 					)}
 
 					<div className="space-y-1.5">
 						<Label htmlFor="email" className="text-sm font-medium">
-							Email address
+							E-Mail-Adresse
 						</Label>
 						<div className="relative">
 							<Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -164,14 +164,14 @@ export function LoginMode() {
 
 					<div className="space-y-1.5">
 						<Label htmlFor="password" className="text-sm font-medium">
-							Password
+							Passwort
 						</Label>
 						<div className="relative">
 							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								id="password"
 								type={showPassword ? "text" : "password"}
-								placeholder="Enter your password"
+								placeholder="Dein Passwort eingeben"
 								autoComplete="current-password"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
@@ -181,7 +181,7 @@ export function LoginMode() {
 							<button
 								type="button"
 								onClick={() => setShowPassword(!showPassword)}
-								aria-label={showPassword ? "Hide password" : "Show password"}
+								aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
 								{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -196,12 +196,12 @@ export function LoginMode() {
 							disabled={isSubmitting}
 							className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground hover:no-underline disabled:opacity-50"
 						>
-							{resetEmailSent ? "Resend link?" : "Forgot password?"}
+							{resetEmailSent ? "Link erneut senden?" : "Passwort vergessen?"}
 						</button>
 					</div>
 
 					<Button type="submit" disabled={isSubmitting} className="h-12 w-full text-base font-semibold">
-						{isSubmitting ? "Signing in…" : "Sign In"}
+						{isSubmitting ? "Wird angemeldet…" : "Anmelden"}
 					</Button>
 				</form>
 			</div>

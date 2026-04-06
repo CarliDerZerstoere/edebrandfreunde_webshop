@@ -7,7 +7,7 @@ import { AccountProvider } from "@/ui/components/account/account-context";
 import { getCurrentUser } from "./get-current-user";
 
 export const metadata = {
-	title: "My Account",
+	title: "Mein Konto · Edelbrandfreunde",
 };
 
 export default function AccountLayout({ children }: { children: ReactNode }) {

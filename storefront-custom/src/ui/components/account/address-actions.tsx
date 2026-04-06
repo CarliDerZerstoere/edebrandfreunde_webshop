@@ -25,10 +25,10 @@ export function DeleteAddressButton({ addressId }: DeleteProps) {
 		return (
 			<div className="flex items-center gap-1">
 				<Button variant="destructive" size="sm" onClick={handleDelete} disabled={isPending}>
-					{isPending ? "…" : "Delete"}
+					{isPending ? "…" : "Löschen"}
 				</Button>
 				<Button variant="ghost" size="sm" onClick={() => setShowConfirm(false)}>
-					Cancel
+					Abbrechen
 				</Button>
 			</div>
 		);
@@ -40,7 +40,7 @@ export function DeleteAddressButton({ addressId }: DeleteProps) {
 			size="sm"
 			onClick={() => setShowConfirm(true)}
 			disabled={isPending}
-			aria-label="Delete address"
+			aria-label="Adresse löschen"
 		>
 			<Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
 		</Button>
@@ -64,7 +64,7 @@ export function SetDefaultAddressButton({ addressId, type }: SetDefaultProps) {
 		});
 	}
 
-	const label = type === "SHIPPING" ? "Set as default shipping" : "Set as default billing";
+	const label = type === "SHIPPING" ? "Als Standard-Versandadresse setzen" : "Als Standard-Rechnungsadresse setzen";
 
 	return (
 		<Button variant="ghost" size="sm" onClick={handleSetDefault} disabled={isPending} aria-label={label}>

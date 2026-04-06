@@ -23,10 +23,9 @@ shop.edelbrandfreunde.at {
 }
 
 api.edelbrandfreunde.at {
-	# Rate limiting: 60 requests per minute per IP
-	@ratelimited {
-		method POST
-	}
+	# HINWEIS: Rate Limiting erfordert ein custom Caddy-Build mit dem rate_limit Plugin,
+	# oder eine externe Lösung wie CrowdSec/fail2ban.
+	# Die Auth-Routes im Storefront haben Application-Level Rate Limiting.
 
 	reverse_proxy api:8000 {
 		header_up X-Forwarded-Proto https
@@ -45,9 +44,14 @@ api.edelbrandfreunde.at {
 }
 
 admin.edelbrandfreunde.at {
-	# Basic auth for an extra layer of protection on the admin dashboard
-	# Generate a password hash with: docker exec -it saleor-production-caddy-1 caddy hash-password
-	# Then uncomment and replace below:
+	# ⚠️  WICHTIG: Basic Auth aktivieren für zusätzlichen Schutz!
+	# Ohne Basic Auth ist das Dashboard nur durch Saleors eigene Authentifizierung geschützt.
+	#
+	# So aktivieren:
+	#   1. Hash generieren: docker exec -it saleor-production-caddy-1 caddy hash-password
+	#   2. Unten einsetzen und Kommentarzeichen entfernen
+	#   3. docker compose restart caddy
+	#
 	# basicauth {
 	#     admin $2a$14$REPLACE_WITH_BCRYPT_HASH
 	# }

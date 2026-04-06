@@ -30,17 +30,17 @@ export function SetPasswordMode({ email, token }: Props) {
 		setError("");
 
 		if (!password) {
-			setError("Please enter a new password");
+			setError("Bitte gib ein neues Passwort ein");
 			return;
 		}
 
 		if (password.length < 8) {
-			setError("Password must be at least 8 characters");
+			setError("Das Passwort muss mindestens 8 Zeichen lang sein");
 			return;
 		}
 
 		if (password !== confirmPassword) {
-			setError("Passwords do not match");
+			setError("Passwörter stimmen nicht überein");
 			return;
 		}
 
@@ -61,9 +61,9 @@ export function SetPasswordMode({ email, token }: Props) {
 			if (data.errors?.length) {
 				const err = data.errors[0];
 				if (err.code === "INVALID_TOKEN" || err.message?.includes("token")) {
-					setError("This password reset link has expired. Please request a new one.");
+					setError("Dieser Passwort-Zurücksetzen-Link ist abgelaufen. Bitte fordere einen neuen an.");
 				} else {
-					setError(err.message || "Failed to set password");
+					setError(err.message || "Passwort konnte nicht gesetzt werden");
 				}
 				return;
 			}
@@ -76,7 +76,7 @@ export function SetPasswordMode({ email, token }: Props) {
 				}, 2000);
 			}
 		} catch {
-			setError("An error occurred. Please try again.");
+			setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -87,14 +87,14 @@ export function SetPasswordMode({ email, token }: Props) {
 			<div className="mx-auto my-16 w-full max-w-md">
 				<div className="rounded-lg border border-border bg-card p-8 shadow-sm">
 					<div className="flex flex-col items-center gap-4 text-center">
-						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-							<CheckCircle className="h-8 w-8 text-green-600" />
+						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
+							<CheckCircle className="h-8 w-8 text-accent" />
 						</div>
-						<h1 className="text-2xl font-semibold">Password Updated!</h1>
+						<h1 className="text-2xl font-semibold">Passwort aktualisiert!</h1>
 						<p className="text-muted-foreground">
-							Your password has been successfully reset. You are now signed in.
+							Dein Passwort wurde erfolgreich zurückgesetzt. Du bist jetzt angemeldet.
 						</p>
-						<p className="text-sm text-muted-foreground">Redirecting you to the store…</p>
+						<p className="text-sm text-muted-foreground">Du wirst weitergeleitet…</p>
 					</div>
 				</div>
 			</div>
@@ -105,9 +105,9 @@ export function SetPasswordMode({ email, token }: Props) {
 		<div className="mx-auto my-16 w-full max-w-md">
 			<div className="rounded-lg border border-border bg-card p-8 shadow-sm">
 				<div className="mb-6 text-center">
-					<h1 className="text-2xl font-semibold">Set New Password</h1>
+					<h1 className="text-2xl font-semibold">Neues Passwort setzen</h1>
 					<p className="mt-2 text-sm text-muted-foreground">
-						Enter a new password for <span className="font-medium">{email}</span>
+						Neues Passwort für <span className="font-medium">{email}</span> eingeben
 					</p>
 				</div>
 
@@ -120,14 +120,14 @@ export function SetPasswordMode({ email, token }: Props) {
 
 					<div className="space-y-1.5">
 						<Label htmlFor="password" className="text-sm font-medium">
-							New Password
+							Neues Passwort
 						</Label>
 						<div className="relative">
 							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								id="password"
 								type={showPassword ? "text" : "password"}
-								placeholder="At least 8 characters…"
+								placeholder="Mindestens 8 Zeichen…"
 								autoComplete="new-password"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
@@ -137,7 +137,7 @@ export function SetPasswordMode({ email, token }: Props) {
 							<button
 								type="button"
 								onClick={() => setShowPassword(!showPassword)}
-								aria-label={showPassword ? "Hide password" : "Show password"}
+								aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
 								{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -147,14 +147,14 @@ export function SetPasswordMode({ email, token }: Props) {
 
 					<div className="space-y-1.5">
 						<Label htmlFor="confirmPassword" className="text-sm font-medium">
-							Confirm Password
+							Passwort bestätigen
 						</Label>
 						<div className="relative">
 							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
 								id="confirmPassword"
 								type={showConfirmPassword ? "text" : "password"}
-								placeholder="Confirm your password"
+								placeholder="Passwort erneut eingeben"
 								autoComplete="new-password"
 								value={confirmPassword}
 								onChange={(e) => setConfirmPassword(e.target.value)}
@@ -164,7 +164,7 @@ export function SetPasswordMode({ email, token }: Props) {
 							<button
 								type="button"
 								onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-								aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+								aria-label={showConfirmPassword ? "Passwort verbergen" : "Passwort anzeigen"}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
 								{showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -173,7 +173,7 @@ export function SetPasswordMode({ email, token }: Props) {
 					</div>
 
 					<Button type="submit" disabled={isSubmitting} className="h-12 w-full text-base font-semibold">
-						{isSubmitting ? "Updating…" : "Update Password"}
+						{isSubmitting ? "Wird aktualisiert…" : "Passwort aktualisieren"}
 					</Button>
 
 					<div className="text-center">
@@ -181,7 +181,7 @@ export function SetPasswordMode({ email, token }: Props) {
 							href={`/${params.channel}/login`}
 							className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground hover:no-underline"
 						>
-							Back to Sign In
+							Zurück zur Anmeldung
 						</Link>
 					</div>
 				</form>

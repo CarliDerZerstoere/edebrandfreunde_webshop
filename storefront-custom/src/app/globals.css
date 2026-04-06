@@ -146,8 +146,8 @@
 	.card-lift:hover {
 		transform:  translateY(-3px);
 		box-shadow:
-			0 6px 20px -4px oklch(0.17 0.02 40 / 0.12),
-			0 2px  6px -2px oklch(0.17 0.02 40 / 0.08);
+			0 6px 20px -4px oklch(0.198 0.034 155 / 0.12),
+			0 2px  6px -2px oklch(0.198 0.034 155 / 0.08);
 	}
 }
 

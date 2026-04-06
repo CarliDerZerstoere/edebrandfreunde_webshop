@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
@@ -28,7 +28,7 @@ export function HeroEntrance({ title, tagline }: HeroEntranceProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
 
-	useLayoutEffect(() => {
+	useEffect(() => {
 		if (prefersReduced) return;
 
 		const container = containerRef.current;
@@ -92,25 +92,26 @@ export function HeroEntrance({ title, tagline }: HeroEntranceProps) {
 				<img
 					src="/logo-edelbrandfreunde.png"
 					alt="Edelbrandfreunde Logo"
-					width={120}
-					height={120}
-					className="mx-auto invert mix-blend-screen"
+					width={200}
+					height={200}
+					className="mx-auto invert mix-blend-screen opacity-60"
 				/>
 			</div>
 
 			{/* Headline — CMS editable via landing-hero page title */}
 			<h1
-				className="hero-title font-display font-semibold leading-[1.05] tracking-tight"
+				className="hero-title font-display font-semibold leading-[1.05] tracking-tight text-white"
 				data-hero-anim
-				style={{ fontSize: "clamp(3rem, 8vw, 10rem)" }}
+				style={{ fontSize: "clamp(3rem, 8vw, 10rem)", textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}
 			>
 				{title}
 			</h1>
 
 			{/* Static brand subtitle */}
 			<p
-				className="hero-subtitle mt-4 font-display text-lg italic tracking-wide sm:text-xl"
+				className="hero-subtitle mt-4 font-display text-lg italic tracking-wide text-white/70 sm:text-xl"
 				data-hero-anim
+				style={{ textShadow: "0 1px 10px rgba(0,0,0,0.4)" }}
 			>
 				Abfindungsbrennerei &middot; Niederösterreich
 			</p>
@@ -124,8 +125,9 @@ export function HeroEntrance({ title, tagline }: HeroEntranceProps) {
 
 			{/* Tagline — CMS editable via landing-hero page content */}
 			<p
-				className="hero-tagline mx-auto mt-8 max-w-xl whitespace-pre-line text-lg leading-relaxed"
+				className="hero-tagline mx-auto mt-8 max-w-xl whitespace-pre-line text-lg leading-relaxed text-white/80"
 				data-hero-anim
+				style={{ textShadow: "0 1px 10px rgba(0,0,0,0.4)" }}
 			>
 				{tagline}
 			</p>

@@ -7,14 +7,13 @@ import { formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
 
 export const metadata = {
-	title: "Shopping Cart · Saleor Storefront example",
+	title: "Warenkorb · Edelbrandfreunde",
 };
 
 export default function Page(props: { params: Promise<{ channel: string }> }) {
 	return (
 		<section className="mx-auto max-w-7xl p-8">
-			<h1 className="mt-8 text-3xl font-bold text-neutral-900">Your Shopping Cart</h1>
-			{/* Cart content is dynamic (reads cookies) - wrap in Suspense */}
+			<h1 className="mt-8 text-3xl font-bold text-foreground">Dein Warenkorb</h1>
 			<Suspense fallback={<CartSkeleton />}>
 				<CartContent params={props.params} />
 			</Suspense>
@@ -22,10 +21,6 @@ export default function Page(props: { params: Promise<{ channel: string }> }) {
 	);
 }
 
-/**
- * Dynamic cart content - reads cookies at request time.
- * With Cache Components, this streams in after the static shell.
- */
 async function CartContent({ params: paramsPromise }: { params: Promise<{ channel: string }> }) {
 	const params = await paramsPromise;
 	const checkoutId = await Checkout.getIdFromCookies(params.channel);
@@ -34,14 +29,14 @@ async function CartContent({ params: paramsPromise }: { params: Promise<{ channe
 	if (!checkout || checkout.lines.length < 1) {
 		return (
 			<div className="mt-12">
-				<p className="my-12 text-sm text-neutral-500">
-					Looks like you haven&apos;t added any items to the cart yet.
+				<p className="my-12 text-sm text-muted-foreground">
+					Dein Warenkorb ist noch leer. Entdecke unser Sortiment!
 				</p>
 				<LinkWithChannel
 					href="/products"
-					className="inline-block max-w-full rounded border border-transparent bg-neutral-900 px-6 py-3 text-center font-medium text-neutral-50 hover:bg-neutral-800 aria-disabled:cursor-not-allowed aria-disabled:bg-neutral-500 sm:px-16"
+					className="inline-block max-w-full rounded border border-transparent bg-primary px-6 py-3 text-center font-medium text-primary-foreground hover:bg-primary/90 sm:px-16"
 				>
-					Explore products
+					Produkte entdecken
 				</LinkWithChannel>
 			</div>
 		);
@@ -52,11 +47,11 @@ async function CartContent({ params: paramsPromise }: { params: Promise<{ channe
 			<ul
 				data-testid="CartProductList"
 				role="list"
-				className="divide-y divide-neutral-200 border-b border-t border-neutral-200"
+				className="divide-y divide-border border-b border-t border-border"
 			>
 				{checkout.lines.map((item) => (
 					<li key={item.id} className="flex py-4">
-						<div className="aspect-square h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-neutral-50 sm:h-32 sm:w-32">
+						<div className="aspect-square h-24 w-24 shrink-0 overflow-hidden rounded-md border border-border bg-card sm:h-32 sm:w-32">
 							{item.variant?.product?.thumbnail?.url && (
 								<Image
 									src={item.variant.product.thumbnail.url}
@@ -76,19 +71,19 @@ async function CartContent({ params: paramsPromise }: { params: Promise<{ channe
 											variantId: item.variant.id,
 										})}
 									>
-										<h2 className="font-medium text-neutral-700">{item.variant?.product?.name}</h2>
+										<h2 className="font-medium text-foreground">{item.variant?.product?.name}</h2>
 									</LinkWithChannel>
-									<p className="mt-1 text-sm text-neutral-500">{item.variant?.product?.category?.name}</p>
+									<p className="mt-1 text-sm text-muted-foreground">{item.variant?.product?.category?.name}</p>
 									{item.variant.name !== item.variant.id && Boolean(item.variant.name) && (
-										<p className="mt-1 text-sm text-neutral-500">Variant: {item.variant.name}</p>
+										<p className="mt-1 text-sm text-muted-foreground">Variante: {item.variant.name}</p>
 									)}
 								</div>
-								<p className="text-right font-semibold text-neutral-900">
+								<p className="text-right font-semibold text-foreground">
 									{formatMoney(item.totalPrice.gross.amount, item.totalPrice.gross.currency)}
 								</p>
 							</div>
 							<div className="flex justify-between">
-								<div className="text-sm font-bold">Qty: {item.quantity}</div>
+								<div className="text-sm font-bold">Menge: {item.quantity}</div>
 								<DeleteLineButton checkoutId={checkoutId} lineId={item.id} />
 							</div>
 						</div>
@@ -97,13 +92,13 @@ async function CartContent({ params: paramsPromise }: { params: Promise<{ channe
 			</ul>
 
 			<div className="mt-12">
-				<div className="rounded border bg-neutral-50 px-4 py-2">
+				<div className="rounded border border-border bg-card px-4 py-2">
 					<div className="flex items-center justify-between gap-2 py-2">
 						<div>
-							<p className="font-semibold text-neutral-900">Your Total</p>
-							<p className="mt-1 text-sm text-neutral-500">Shipping will be calculated in the next step</p>
+							<p className="font-semibold text-foreground">Gesamtsumme</p>
+							<p className="mt-1 text-sm text-muted-foreground">Versandkosten werden im nächsten Schritt berechnet</p>
 						</div>
-						<div className="font-medium text-neutral-900">
+						<div className="font-medium text-foreground">
 							{formatMoney(checkout.totalPrice.gross.amount, checkout.totalPrice.gross.currency)}
 						</div>
 					</div>
@@ -120,27 +115,24 @@ async function CartContent({ params: paramsPromise }: { params: Promise<{ channe
 	);
 }
 
-/**
- * Skeleton fallback for cart - part of static shell.
- */
 function CartSkeleton() {
 	return (
 		<div className="mt-12 animate-pulse">
-			<div className="divide-y divide-neutral-200 border-b border-t border-neutral-200">
+			<div className="divide-y divide-border border-b border-t border-border">
 				{[1, 2].map((i) => (
 					<div key={i} className="flex py-4">
-						<div className="h-24 w-24 rounded-md bg-neutral-200 sm:h-32 sm:w-32" />
+						<div className="h-24 w-24 rounded-md bg-muted sm:h-32 sm:w-32" />
 						<div className="flex-1 p-4 py-2">
-							<div className="h-5 w-48 rounded bg-neutral-200" />
-							<div className="mt-2 h-4 w-32 rounded bg-neutral-200" />
+							<div className="h-5 w-48 rounded bg-muted" />
+							<div className="mt-2 h-4 w-32 rounded bg-muted" />
 						</div>
 					</div>
 				))}
 			</div>
 			<div className="mt-12">
-				<div className="h-20 rounded bg-neutral-100" />
+				<div className="h-20 rounded bg-secondary" />
 				<div className="mt-10 flex justify-center">
-					<div className="h-12 w-48 rounded bg-neutral-200" />
+					<div className="h-12 w-48 rounded bg-muted" />
 				</div>
 			</div>
 		</div>

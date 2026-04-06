@@ -3,34 +3,38 @@ interface WavePatternProps {
 }
 
 /**
- * Minimal wave pattern for category/collection hero backgrounds.
- * Uses currentColor for theming - apply text-* classes to control colors.
+ * Subtle gradient background for category/collection headers without images.
+ * Uses the Obstgarten & Creme palette — soft green-to-cream gradient
+ * with a light leaf-inspired texture.
  */
 export function WavePattern({ className }: WavePatternProps) {
-	const generateSimpleContour = (yOffset: number, amplitude: number): string => {
-		const points: string[] = [];
-		for (let i = 0; i <= 36; i++) {
-			const x = (i / 36) * 1440;
-			const y = yOffset + Math.sin((i / 36) * Math.PI * 2) * amplitude;
-			points.push(`${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`);
-		}
-		return points.join(" ");
-	};
-
 	return (
-		<svg
-			className={className}
-			viewBox="0 0 1440 400"
-			fill="none"
-			xmlns="http://www.w3.org/2000/svg"
-			preserveAspectRatio="xMidYMid slice"
-		>
-			<rect width="1440" height="400" fill="currentColor" className="text-secondary" />
-			<g stroke="currentColor" className="text-foreground" fill="none" strokeWidth="1">
-				{[...Array(6)].map((_, i) => (
-					<path key={i} d={generateSimpleContour(150 + i * 20, 30 - i * 3)} opacity={0.08 - i * 0.01} />
-				))}
-			</g>
-		</svg>
+		<div className={className} style={{ position: "relative", overflow: "hidden" }}>
+			{/* Base gradient — soft green to cream */}
+			<div
+				className="absolute inset-0"
+				style={{
+					background:
+						"linear-gradient(135deg, oklch(0.515 0.082 155 / 0.12) 0%, oklch(0.928 0.022 82) 40%, oklch(0.963 0.009 80) 100%)",
+				}}
+			/>
+
+			{/* Radial accent glow */}
+			<div
+				className="absolute inset-0"
+				style={{
+					background:
+						"radial-gradient(ellipse 60% 80% at 20% 80%, oklch(0.515 0.082 155 / 0.08), transparent)",
+				}}
+			/>
+
+			{/* Film-grain texture for depth */}
+			<div
+				className="absolute inset-0 opacity-[0.025]"
+				style={{
+					backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+				}}
+			/>
+		</div>
 	);
 }

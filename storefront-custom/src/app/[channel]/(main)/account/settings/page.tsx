@@ -8,7 +8,7 @@ export default async function AccountSettingsPage() {
 	const user = await getCurrentUser();
 	if (!user) return null;
 
-	const memberSince = new Date(user.dateJoined).toLocaleDateString("en-US", {
+	const memberSince = new Date(user.dateJoined).toLocaleDateString("de-AT", {
 		month: "long",
 		year: "numeric",
 	});
@@ -16,8 +16,8 @@ export default async function AccountSettingsPage() {
 	return (
 		<div className="space-y-8">
 			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-				<p className="mt-1 text-sm text-muted-foreground">Manage your account settings</p>
+				<h1 className="text-2xl font-semibold tracking-tight">Einstellungen</h1>
+				<p className="mt-1 text-sm text-muted-foreground">Verwalten Sie Ihre Kontoeinstellungen</p>
 			</div>
 
 			<div className="divide-y rounded-lg border">
@@ -44,7 +44,7 @@ export default async function AccountSettingsPage() {
 				<div className="p-4 sm:p-6">
 					<div className="flex items-center gap-2 text-sm text-muted-foreground">
 						<Calendar className="h-4 w-4" />
-						<span>Member since {memberSince}</span>
+						<span>Mitglied seit {memberSince}</span>
 					</div>
 				</div>
 			</div>

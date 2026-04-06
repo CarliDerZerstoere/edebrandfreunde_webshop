@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { SignUpForm } from "@/ui/components/sign-up-form";
 
 export const metadata = {
-	title: "Create Account",
-	description: "Create a new account to save your addresses and order history.",
+	title: "Registrieren · Edelbrandfreunde",
+	description: "Erstelle ein neues Konto, um deine Adressen und Bestellhistorie zu speichern.",
 };
 
 export default function SignUpPage() {

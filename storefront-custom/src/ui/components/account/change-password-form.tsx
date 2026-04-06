@@ -39,17 +39,17 @@ export function ChangePasswordForm() {
 		return (
 			<div className="flex items-center justify-between">
 				<div>
-					<p className="text-sm text-muted-foreground">Password</p>
+					<p className="text-sm text-muted-foreground">Passwort</p>
 					<p className="font-medium">••••••••</p>
 				</div>
 				<div className="flex items-center gap-2">
 					{success && (
-						<span aria-live="polite" className="text-sm text-green-600">
-							Updated
+						<span aria-live="polite" className="text-sm text-accent">
+							Aktualisiert
 						</span>
 					)}
 					<Button variant="ghost" size="sm" onClick={() => setIsOpen(true)}>
-						Change
+						Ändern
 					</Button>
 				</div>
 			</div>
@@ -58,7 +58,7 @@ export function ChangePasswordForm() {
 
 	return (
 		<form ref={formRef} action={handleSubmit} className="space-y-4">
-			<p className="text-sm text-muted-foreground">Password</p>
+			<p className="text-sm text-muted-foreground">Passwort</p>
 			{error && (
 				<p role="alert" className="text-sm text-destructive">
 					{error}
@@ -66,7 +66,7 @@ export function ChangePasswordForm() {
 			)}
 
 			<div className="space-y-1.5">
-				<Label htmlFor="oldPassword">Current password</Label>
+				<Label htmlFor="oldPassword">Aktuelles Passwort</Label>
 				<div className="relative">
 					<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
@@ -80,7 +80,7 @@ export function ChangePasswordForm() {
 					<button
 						type="button"
 						onClick={() => setShowOld(!showOld)}
-						aria-label={showOld ? "Hide password" : "Show password"}
+						aria-label={showOld ? "Passwort verbergen" : "Passwort anzeigen"}
 						className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 					>
 						{showOld ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -89,7 +89,7 @@ export function ChangePasswordForm() {
 			</div>
 
 			<div className="space-y-1.5">
-				<Label htmlFor="newPassword">New password</Label>
+				<Label htmlFor="newPassword">Neues Passwort</Label>
 				<div className="relative">
 					<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
@@ -97,7 +97,7 @@ export function ChangePasswordForm() {
 						name="newPassword"
 						type={showNew ? "text" : "password"}
 						autoComplete="new-password"
-						placeholder="At least 8 characters…"
+						placeholder="Mindestens 8 Zeichen…"
 						className="pl-10 pr-10"
 						minLength={8}
 						required
@@ -105,7 +105,7 @@ export function ChangePasswordForm() {
 					<button
 						type="button"
 						onClick={() => setShowNew(!showNew)}
-						aria-label={showNew ? "Hide password" : "Show password"}
+						aria-label={showNew ? "Passwort verbergen" : "Passwort anzeigen"}
 						className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 					>
 						{showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -114,7 +114,7 @@ export function ChangePasswordForm() {
 			</div>
 
 			<div className="space-y-1.5">
-				<Label htmlFor="confirmPassword">Confirm new password</Label>
+				<Label htmlFor="confirmPassword">Neues Passwort bestätigen</Label>
 				<div className="relative">
 					<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
@@ -131,7 +131,7 @@ export function ChangePasswordForm() {
 
 			<div className="flex gap-2">
 				<Button type="submit" size="sm" disabled={isPending}>
-					{isPending ? "Changing…" : "Change password"}
+					{isPending ? "Wird geändert…" : "Passwort ändern"}
 				</Button>
 				<Button
 					type="button"
@@ -143,7 +143,7 @@ export function ChangePasswordForm() {
 						formRef.current?.reset();
 					}}
 				>
-					Cancel
+					Abbrechen
 				</Button>
 			</div>
 		</form>
