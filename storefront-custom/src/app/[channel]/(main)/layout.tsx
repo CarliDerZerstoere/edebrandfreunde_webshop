@@ -2,9 +2,11 @@ import { type ReactNode, Suspense } from "react";
 import { Footer } from "@/ui/components/footer";
 import { Header } from "@/ui/components/header";
 import { CartProvider, CartDrawerWrapper } from "@/ui/components/cart";
+import { FlyToCartProvider } from "@/ui/components/cart/fly-to-cart";
 import { brandConfig } from "@/config/brand";
 import { Logo } from "@/ui/components/shared/logo";
 import { PageTransition } from "@/ui/components/page-transition";
+import { ScrollProgress } from "@/ui/components/scroll-progress";
 
 export const metadata = {
 	title: brandConfig.siteName,
@@ -83,6 +85,8 @@ export default async function RootLayout(props: {
 
 	return (
 		<CartProvider>
+			<FlyToCartProvider>
+			<ScrollProgress />
 			<Suspense fallback={<HeaderSkeleton />}>
 				<Header channel={channel} />
 			</Suspense>
@@ -100,6 +104,7 @@ export default async function RootLayout(props: {
 			<Suspense fallback={null}>
 				<CartDrawerWrapper channel={channel} />
 			</Suspense>
+			</FlyToCartProvider>
 		</CartProvider>
 	);
 }

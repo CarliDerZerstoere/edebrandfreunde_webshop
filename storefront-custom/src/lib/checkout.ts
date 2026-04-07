@@ -20,6 +20,8 @@ export async function saveIdToCookie(channel: string, checkoutId: string) {
 	(await cookies()).set(cookieName, checkoutId, {
 		sameSite: "lax",
 		secure: shouldUseHttps,
+		httpOnly: true,
+		path: "/",
 	});
 }
 

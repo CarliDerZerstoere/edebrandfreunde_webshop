@@ -6,6 +6,7 @@ import { FilterBar, ProductGrid, useProductFilters, type ProductCardData } from 
 import { Pagination } from "@/ui/components/pagination";
 import { PaginationSkeleton } from "@/ui/components/pagination-skeleton";
 import { useCart } from "@/ui/components/cart/cart-context";
+import { useFlyToCart } from "@/ui/components/cart/fly-to-cart";
 import { quickAddToCart } from "@/ui/components/plp/actions";
 
 interface ProductsPageClientProps {
@@ -25,7 +26,7 @@ export function ProductsPageClient({ products, pageInfo, resolvedCategories = []
 	const params = useParams();
 	const channel = params.channel as string;
 	const { openCart } = useCart();
-	// Track add-to-cart state per product: idle → pending → success → idle
+	const { flyToCart } = useFlyToCart();
 	const [addingStates, setAddingStates] = useState<Record<string, "pending" | "success">>({});
 
 	const handleQuickAdd = useCallback(
@@ -35,8 +36,11 @@ export function ProductsPageClient({ products, pageInfo, resolvedCategories = []
 			const result = await quickAddToCart(channel, variantId);
 
 			if (result.success) {
+				// Trigger fly-to-cart animation from the product image
+				const imgEl = document.querySelector(`[data-product-id="${productId}"]`) as HTMLElement | null;
+				if (imgEl) flyToCart(imgEl);
+
 				setAddingStates((prev) => ({ ...prev, [productId]: "success" }));
-				// Show checkmark for 1.5s, then open cart and reset
 				setTimeout(() => {
 					openCart();
 					setAddingStates((prev) => {
@@ -53,7 +57,7 @@ export function ProductsPageClient({ products, pageInfo, resolvedCategories = []
 				});
 			}
 		},
-		[channel, openCart],
+		[channel, openCart, flyToCart],
 	);
 
 	const {

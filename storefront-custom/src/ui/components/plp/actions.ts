@@ -30,6 +30,12 @@ export async function quickAddToCart(channel: string, variantId: string) {
 			return { success: false };
 		}
 
+		// Check Saleor domain-level errors (e.g. out of stock, not available in channel)
+		const domainErrors = result.data.checkoutLinesAdd?.errors;
+		if (domainErrors && domainErrors.length > 0) {
+			return { success: false };
+		}
+
 		revalidatePath("/cart");
 		return { success: true };
 	} catch {

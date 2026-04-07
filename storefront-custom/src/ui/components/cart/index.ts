@@ -3,3 +3,4 @@ export { CartDrawer } from "./cart-drawer";
 export { CartDrawerWrapper } from "./cart-drawer-wrapper";
 export { CartButton } from "./cart-button";
 export { deleteCartLine, updateCartLineQuantity } from "./actions";
+export { FlyToCartProvider, useFlyToCart } from "./fly-to-cart";

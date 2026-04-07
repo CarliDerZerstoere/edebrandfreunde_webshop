@@ -61,11 +61,24 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 		}).format(amount);
 	};
 
+	// Grundpreis pro Liter (PrAG §10a)
+	const perLiter = (() => {
+		if (!product.volume || !product.price) return null;
+		const cleaned = product.volume.replace(/\s/g, "").toLowerCase();
+		let ml: number | null = null;
+		const literMatch = cleaned.match(/^(\d+[.,]\d+)\s*l$/);
+		if (literMatch) ml = Math.round(parseFloat(literMatch[1].replace(",", ".")) * 1000);
+		const mlMatch = cleaned.match(/^(\d+)\s*ml$/);
+		if (mlMatch) ml = parseInt(mlMatch[1], 10);
+		if (!ml || ml <= 0) return null;
+		return formatPrice((product.price / ml) * 1000, product.currency);
+	})();
+
 	return (
 		<article className="group card-lift">
 			<Link href={product.href} className="block">
 				{/* Image Container */}
-				<div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-secondary">
+				<div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-secondary" data-product-id={product.id}>
 					{/* Primary Image */}
 					<Image
 						src={product.image}
@@ -173,13 +186,18 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 						</div>
 					)}
 
-					{/* Price */}
-					<div className="flex items-center gap-2 pt-1">
-						<span className="text-base font-semibold" style={{ color: "var(--copper)" }}>{formatPrice(product.price, product.currency)}</span>
-						{product.compareAtPrice && (
-							<span className="text-sm text-muted-foreground line-through">
-								{formatPrice(product.compareAtPrice, product.currency)}
-							</span>
+					{/* Price + Grundpreis */}
+					<div className="pt-1">
+						<div className="flex items-center gap-2">
+							<span className="text-base font-semibold" style={{ color: "var(--copper)" }}>{formatPrice(product.price, product.currency)}</span>
+							{product.compareAtPrice && (
+								<span className="text-sm text-muted-foreground line-through">
+									{formatPrice(product.compareAtPrice, product.currency)}
+								</span>
+							)}
+						</div>
+						{perLiter && (
+							<p className="text-[10px] text-muted-foreground">{perLiter} / Liter · unter Abfindung hergestellt</p>
 						)}
 					</div>
 				</div>

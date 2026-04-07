@@ -1,6 +1,6 @@
 import { type MetadataRoute } from "next";
 import { executePublicGraphQL } from "@/lib/graphql";
-import { LandingCategoriesDocument } from "@/gql/graphql";
+import { LandingCategoriesDocument, ProductListPaginatedDocument } from "@/gql/graphql";
 
 const BASE_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || "https://shop.edelbrandfreunde.at";
 const CHANNEL = process.env.NEXT_PUBLIC_DEFAULT_CHANNEL || "oe";
@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		priority: 1.0,
 	});
 
-	// Products page
+	// Products listing page
 	entries.push({
 		url: `${BASE_URL}/${CHANNEL}/products`,
 		lastModified: new Date(),
@@ -24,7 +24,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		priority: 0.9,
 	});
 
-	// Categories from Saleor
+	// Individual product pages
+	const productResult = await executePublicGraphQL(ProductListPaginatedDocument, {
+		variables: { first: 100, channel: CHANNEL },
+	});
+
+	if (productResult.ok && productResult.data.products) {
+		for (const { node } of productResult.data.products.edges) {
+			entries.push({
+				url: `${BASE_URL}/${CHANNEL}/products/${node.slug}`,
+				lastModified: node.created ? new Date(node.created) : new Date(),
+				changeFrequency: "weekly",
+				priority: 0.85,
+			});
+		}
+	}
+
+	// Categories
 	const catResult = await executePublicGraphQL(LandingCategoriesDocument, {
 		variables: { first: 50 },
 	});
@@ -40,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		}
 	}
 
-	// Static CMS pages
+	// CMS pages
 	const pageSlugs = [
 		"impressum",
 		"datenschutz",
@@ -48,8 +64,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		"kontakt",
 		"versand",
 		"widerruf",
-		"landing-about",
-		"landing-destillation",
+		"ueber-uns",
+		"faq",
 	];
 
 	for (const slug of pageSlugs) {

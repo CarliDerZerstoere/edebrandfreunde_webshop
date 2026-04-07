@@ -20,6 +20,10 @@ query LandingCategories($first: Int!) {
 					url
 					alt
 				}
+				metadata {
+					key
+					value
+				}
 			}
 		}
 	}

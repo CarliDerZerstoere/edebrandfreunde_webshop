@@ -292,7 +292,7 @@ function CategoriesSection({ page, categories }: { page: any; categories: any[] 
 						<RevealOnScroll key={cat.id} delay={index * 80}>
 							<LinkWithChannel href={`/categories/${cat.slug}`} className="block">
 								<div className="card-lift group flex items-center gap-5 rounded-lg border border-border bg-card px-6 py-5 transition-all duration-200 hover:border-accent/50 sm:px-8 sm:py-6">
-									<span className="text-2xl leading-none">{getCategoryEmoji(cat.slug)}</span>
+									<span className="text-2xl leading-none">{getCategoryEmoji(cat.slug, cat.metadata)}</span>
 									<div className="min-w-0 flex-1">
 										<h3 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
 											{cat.name}
@@ -646,7 +646,12 @@ function Eyebrow({
 	);
 }
 
-function getCategoryEmoji(slug: string): string {
+function getCategoryEmoji(slug: string, metadata?: Array<{ key: string; value: string }> | null): string {
+	// CMS-driven: Dashboard → Categories → Metadata → key "emoji"
+	const cmsEmoji = metadata?.find((m) => m.key === "emoji")?.value;
+	if (cmsEmoji) return cmsEmoji;
+
+	// Fallback map for categories without CMS emoji
 	const map: Record<string, string> = {
 		marille: "\uD83C\uDF51",
 		birne: "\uD83C\uDF50",
@@ -657,6 +662,9 @@ function getCategoryEmoji(slug: string): string {
 		apfel: "\uD83C\uDF4E",
 		holunder: "\uD83C\uDF38",
 		nuss: "\uD83E\uDD5C",
+		hagebutte: "\uD83C\uDF39",
+		mispel: "\uD83C\uDF4A",
+		geschenke: "\uD83C\uDF81",
 	};
 	return map[slug] ?? "\u2726";
 }

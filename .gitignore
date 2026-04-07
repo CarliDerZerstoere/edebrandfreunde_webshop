@@ -23,3 +23,6 @@ saleor-media/
 
 # OS
 .DS_Store
+
+# Postfix DKIM keys
+postfix-data/dkim/*.private

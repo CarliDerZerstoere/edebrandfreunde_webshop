@@ -72,13 +72,12 @@ export function AddToCart({
 	volumeMl,
 	trustSignals,
 }: AddToCartProps) {
-	// Calculate per-serving price from volume attribute or default 700ml
 	const bottleMl = volumeMl ?? 700;
 	const servings = Math.floor(bottleMl / SERVING_ML);
-	const perServing =
-		priceAmount && currency && servings > 0
-			? new Intl.NumberFormat("de-AT", { style: "currency", currency }).format(priceAmount / servings)
-			: null;
+	const fmt = (amount: number) =>
+		currency ? new Intl.NumberFormat("de-AT", { style: "currency", currency }).format(amount) : null;
+	const perServing = priceAmount && servings > 0 ? fmt(priceAmount / servings) : null;
+	const perLiter = priceAmount && bottleMl > 0 ? fmt((priceAmount / bottleMl) * 1000) : null;
 
 	const signals = trustSignals && trustSignals.length > 0 ? trustSignals : [];
 
@@ -96,24 +95,40 @@ export function AddToCart({
 					</>
 				)}
 			</div>
-			{perServing && (
-				<p className="text-xs text-muted-foreground">
-					ca. {perServing} pro Glas ({SERVING_ML / 10} cl · {servings} Portionen)
-				</p>
+			{(perLiter || perServing) && (
+				<div className="space-y-0.5">
+					{perLiter && (
+						<p className="text-xs text-muted-foreground">
+							{perLiter} / Liter {volumeMl ? `(${volumeMl} ml)` : ""}
+						</p>
+					)}
+					{perServing && (
+						<p className="text-xs text-muted-foreground">
+							ca. {perServing} pro Glas ({SERVING_ML / 10} cl)
+						</p>
+					)}
+				</div>
 			)}
 
 			{/* Add to Cart Button */}
 			<AddToCartButton disabled={disabled} disabledReason={disabledReason} />
 
-			{/* Trust Signals — CMS-driven or default fallback */}
-			<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2 text-xs text-muted-foreground">
-				{signals.map((signal, i) => (
-					<span key={i} className="flex items-center gap-1.5">
-						{TRUST_ICONS[i % TRUST_ICONS.length]}
-						{signal}
-					</span>
-				))}
-			</div>
+			{/* Abfindungsvermerk (§ 57 AlkStG) */}
+			<p className="pt-1 text-[10px] text-muted-foreground">
+				Inhalt unter Abfindung hergestellt (§ 57 AlkStG). Nur an Letztverbraucher innerhalb Österreichs.
+			</p>
+
+			{/* Trust Signals — CMS-driven */}
+			{signals.length > 0 && (
+				<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2 text-xs text-muted-foreground">
+					{signals.map((signal, i) => (
+						<span key={i} className="flex items-center gap-1.5">
+							{TRUST_ICONS[i % TRUST_ICONS.length]}
+							{signal}
+						</span>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }

@@ -27,6 +27,15 @@ api.edelbrandfreunde.at {
 	# oder eine externe Lösung wie CrowdSec/fail2ban.
 	# Die Auth-Routes im Storefront haben Application-Level Rate Limiting.
 
+	# Hochgeladene Mediendateien direkt als statische Dateien ausliefern.
+	# Django/Gunicorn liefert /media/ in Produktion (DEBUG=False) nicht aus.
+	handle /media/* {
+		uri strip_prefix /media
+		root * /srv/media
+		file_server
+		header Cache-Control "public, max-age=31536000, immutable"
+	}
+
 	reverse_proxy api:8000 {
 		header_up X-Forwarded-Proto https
 	}

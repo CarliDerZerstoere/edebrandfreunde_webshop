@@ -27,8 +27,6 @@ interface ImageCarouselProps {
 	showThumbnails?: boolean;
 	onIndexChange?: (index: number) => void;
 	onImageClick?: (index: number) => void;
-	/** Add data-zoomable to images for medium-zoom integration */
-	zoomable?: boolean;
 	className?: string;
 }
 
@@ -53,7 +51,6 @@ export function ImageCarousel({
 	showThumbnails = true,
 	onIndexChange,
 	onImageClick,
-	zoomable = false,
 	className,
 }: ImageCarouselProps) {
 	const [api, setApi] = React.useState<CarouselApi>();
@@ -121,10 +118,9 @@ export function ImageCarousel({
 										src={image.url}
 										alt={image.alt || `${productName} - Ansicht ${index + 1}`}
 										fill
-										className={cn("object-cover", zoomable && "cursor-zoom-in")}
+										className={cn("object-cover", onImageClick && "cursor-zoom-in")}
 										sizes="(max-width: 768px) 100vw, 50vw"
 										priority={index === 0}
-										{...(zoomable ? { "data-zoomable": "" } : {})}
 									/>
 								</div>
 							</CarouselItem>

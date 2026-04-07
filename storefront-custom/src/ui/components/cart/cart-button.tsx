@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { ShoppingBagIcon } from "lucide-react";
 import { useCart } from "./cart-context";
+import { useFlyToCart } from "./fly-to-cart";
 
 interface CartButtonProps {
 	itemCount: number;
@@ -9,9 +11,17 @@ interface CartButtonProps {
 
 export function CartButton({ itemCount }: CartButtonProps) {
 	const { openCart } = useCart();
+	const { cartIconRef } = useFlyToCart();
+	const btnRef = useRef<HTMLButtonElement>(null);
+
+	// Register button element as the fly-to-cart target
+	useEffect(() => {
+		cartIconRef.current = btnRef.current;
+	}, [cartIconRef]);
 
 	return (
 		<button
+			ref={btnRef}
 			type="button"
 			onClick={openCart}
 			data-testid="CartNavItem"
