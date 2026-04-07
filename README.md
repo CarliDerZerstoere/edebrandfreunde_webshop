@@ -1,8 +1,93 @@
-# Saleor Production Setup — Self-Hosted E-Commerce
+# Edelbrandfreunde Webshop — Self-Hosted Saleor E-Commerce
 
-Ein vollständiges, produktionsreifes Saleor E-Commerce Setup mit Next.js Storefront, Docker und Caddy.
+Selbst gehosteter Online-Shop für die Abfindungsbrennerei Edelbrandfreunde (edelbrandfreunde.at).
 
-Getestet auf **Ubuntu 24.04** mit **8 GB RAM**.
+**Stack:** Saleor API 3.20 + Next.js 16 Storefront + Caddy + PostgreSQL 16 + Redis 7 + Postfix
+
+---
+
+## Schnellreferenz — Die wichtigsten Befehle
+
+### Shop ein-/ausschalten
+
+```bash
+# Storefront starten
+sudo systemctl start saleor-storefront
+
+# Storefront stoppen
+sudo systemctl stop saleor-storefront
+
+# Storefront neustarten
+sudo systemctl restart saleor-storefront
+
+# Status prüfen
+sudo systemctl status saleor-storefront
+
+# Docker-Container (API, DB, Redis, Dashboard, Caddy, Postfix)
+docker compose up -d        # Alle starten
+docker compose down         # Alle stoppen
+docker compose ps           # Status anzeigen
+docker compose restart api  # Einzelnen Container neustarten
+```
+
+### Storefront neu bauen (nach Code-Änderungen)
+
+```bash
+cd ~/saleor-production/storefront
+
+# 1. Source synchronisieren
+rsync -av --delete ~/saleor-production/storefront-custom/src/ src/
+
+# 2. GraphQL Types neu generieren
+NEXT_PUBLIC_SALEOR_API_URL=https://api.edelbrandfreunde.at/graphql/ pnpm run generate
+
+# 3. Types zurückkopieren
+cp -r src/gql/ ~/saleor-production/storefront-custom/src/gql/
+
+# 4. Bauen
+rm -rf .next
+NEXT_OUTPUT=standalone \
+NEXT_PUBLIC_SALEOR_API_URL=https://api.edelbrandfreunde.at/graphql/ \
+NEXT_PUBLIC_DEFAULT_CHANNEL=oe \
+NEXT_PUBLIC_STOREFRONT_URL=https://shop.edelbrandfreunde.at \
+npx next build
+
+# 5. Static Files kopieren
+cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+
+# 6. Service neustarten
+sudo systemctl restart saleor-storefront
+```
+
+### Logs anschauen
+
+```bash
+# Storefront Logs (live)
+journalctl -u saleor-storefront -f
+
+# Storefront Logs (letzte 50 Zeilen)
+journalctl -u saleor-storefront --no-pager -n 50
+
+# Docker Container Logs
+docker compose logs api --tail 50
+docker compose logs worker --tail 50
+docker compose logs postfix --tail 50
+docker compose logs caddy --tail 50
+```
+
+### Datenbank
+
+```bash
+# Backup erstellen
+docker compose exec -T db pg_dump -U saleor saleor | gzip > ~/backups/saleor_$(date +%Y%m%d_%H%M).sql.gz
+
+# Backup wiederherstellen
+gunzip -c ~/backups/saleor_DATUM.sql.gz | docker compose exec -T db psql -U saleor saleor
+
+# Direkt in die DB verbinden
+docker compose exec db psql -U saleor saleor
+```
 
 ---
 
@@ -10,509 +95,161 @@ Getestet auf **Ubuntu 24.04** mit **8 GB RAM**.
 
 ```
 Internet
-   │
-   ▼
-┌─────────────────────────────────────────────────────┐
-│  Caddy (Docker)  — Reverse Proxy + Auto-TLS         │
-│  Port 80/443                                         │
-├──────────┬──────────────┬───────────────────────────┤
-│          │              │                           │
-│  shop.   │  api.        │  admin.                   │
-│  ↓       │  ↓           │  ↓                        │
-│  :3000   │  :8000       │  :80                      │
-│ (Host)   │ (Docker)     │ (Docker)                  │
-└──────────┴──────────────┴───────────────────────────┘
-     │              │              │
- Storefront    Saleor API     Dashboard
- (systemd)    + Worker/Beat   (statisch)
-                    │
-              ┌─────┴─────┐
-              │ PostgreSQL │  Redis
-              │  (Docker)  │ (Docker)
-              └────────────┘
+   |
+   v
++--------------------------------------------------+
+|  Caddy (Docker) — Reverse Proxy + Auto-TLS       |
+|  Port 80/443                                      |
++-------+---------------+----------------+---------+
+        |               |                |
+  shop.           api.             admin.
+  :3000           :8000             :80
+  (systemd)       (Docker)         (Docker)
+                    |
+              +-----+-----+
+              | PostgreSQL |  Redis   Postfix
+              |  (Docker)  | (Docker) (Docker)
+              +------------+
 ```
 
-| Service | Image | Zugriff |
-|---------|-------|---------|
-| Caddy | `caddy:2-alpine` | Port 80, 443 |
-| Saleor API | `ghcr.io/saleor/saleor:3.20` | Intern :8000 |
-| Dashboard | `ghcr.io/saleor/saleor-dashboard:3.20` | Intern :80 |
-| Worker/Beat | `ghcr.io/saleor/saleor:3.20` | Kein Port |
-| PostgreSQL | `postgres:16-alpine` | Intern :5432 |
-| Redis | `redis:7-alpine` | Intern :6379 |
-| Storefront | Next.js (systemd) | Intern :3000 |
+| Service | Container | Port | Zugriff |
+|---------|-----------|------|---------|
+| Storefront | systemd | 3000 | shop.edelbrandfreunde.at |
+| Saleor API | Docker | 8000 | api.edelbrandfreunde.at |
+| Dashboard | Docker | 80 | admin.edelbrandfreunde.at |
+| PostgreSQL | Docker | 5432 | Nur intern |
+| Redis | Docker | 6379 | Nur intern |
+| Postfix | Docker | 587 | Nur intern |
+| Caddy | Docker | 80/443 | Internet |
 
 ---
 
-## Voraussetzungen
-
-Bevor du das Repo klonst, muss der Server vorbereitet sein:
-
-### 1. Server mieten
-
-- **Empfohlen:** Hetzner Cloud CX32 oder besser (mind. 4 GB RAM, 2 vCPU)
-- **OS:** Ubuntu 24.04 LTS
-- **SSH-Key** bei der Erstellung hinterlegen
-
-### 2. Server absichern
-
-Verbinde dich per SSH und führe folgendes aus:
-
-```bash
-# System updaten
-apt update && apt upgrade -y
-
-# Neuen Admin-User erstellen (NICHT als root arbeiten)
-adduser webshopadmin
-usermod -aG sudo webshopadmin
-
-# SSH-Key für neuen User kopieren
-mkdir -p /home/webshopadmin/.ssh
-cp ~/.ssh/authorized_keys /home/webshopadmin/.ssh/
-chown -R webshopadmin:webshopadmin /home/webshopadmin/.ssh
-
-# SSH härten — Root-Login deaktivieren
-sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
-sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-systemctl restart ssh
-
-# Firewall
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow 22/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw --force enable
-
-# Fail2Ban
-apt install -y fail2ban
-systemctl enable fail2ban
-
-# Automatische Sicherheitsupdates
-apt install -y unattended-upgrades
-dpkg-reconfigure -plow unattended-upgrades
-```
-
-**Ab jetzt nur noch als `webshopadmin` einloggen:**
-
-```bash
-ssh webshopadmin@DEINE-SERVER-IP
-```
-
-### 3. Docker installieren
-
-```bash
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-# Ausloggen und neu einloggen damit die Gruppe aktiv wird
-exit
-```
-
-### 4. Node.js 20 installieren
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-sudo npm install -g pnpm
-```
-
-### 5. DNS-Records setzen
-
-Bei deinem Domain-Provider diese A-Records auf deine Server-IP zeigen lassen:
-
-```
-shop.DEINE-DOMAIN.at    A    DEINE-SERVER-IP
-api.DEINE-DOMAIN.at     A    DEINE-SERVER-IP
-admin.DEINE-DOMAIN.at   A    DEINE-SERVER-IP
-```
-
-Optional (für Redirect):
-```
-www.DEINE-DOMAIN.at     CNAME    shop.DEINE-DOMAIN.at
-```
-
----
-
-## Installation
-
-### 1. Repo klonen
-
-```bash
-cd ~
-git clone git@github.com:CarliDerZerstoere/edebrandfreunde_webshop.git saleor-production
-cd saleor-production
-```
-
-### 2. Storefront klonen
-
-```bash
-git clone https://github.com/saleor/storefront.git storefront
-```
-
-### 3. Secrets erstellen
-
-**Wichtig:** Diese Dateien werden NIEMALS committed. Du musst sie auf jedem neuen Server neu erstellen.
-
-```bash
-# .env — Datenbank- und Redis-Passwörter
-cp .env.example .env
-nano .env
-# Generiere sichere Passwörter:
-#   openssl rand -hex 16    (für POSTGRES_PASSWORD)
-#   openssl rand -hex 24    (für REDIS_PASSWORD)
-
-# .env.api — Saleor API Konfiguration
-cp .env.api.example .env.api
-nano .env.api
-# Passe an:
-#   - DATABASE_URL: Postgres-Passwort aus .env eintragen
-#   - REDIS_URL + CELERY_BROKER_URL: Redis-Passwort aus .env eintragen
-#   - SECRET_KEY: openssl rand -hex 32
-#   - Alle URLs auf deine Domain ändern
-#   - ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS, etc.
-
-# RSA-Key für JWT-Signierung
-openssl genrsa 2048 > rsa_private.pem
-chmod 600 rsa_private.pem
-
-# Dateiberechtigungen sichern
-chmod 600 .env .env.api
-```
-
-### 4. Caddyfile anpassen
-
-```bash
-nano Caddyfile
-# Ersetze alle "edelbrandfreunde.at" durch deine Domain
-```
-
-### 5. docker-compose.yml anpassen
-
-```bash
-nano docker-compose.yml
-# Ändere die Dashboard API_URL auf deine Domain:
-#   API_URL=https://api.DEINE-DOMAIN.at/graphql/
-```
-
-### 6. Backend starten
-
-```bash
-# Datenbank + Redis starten
-docker compose up -d db redis
-sleep 10
-
-# Migrationen ausführen
-docker compose run --rm api python3 manage.py migrate
-docker compose run --rm api python3 manage.py collectstatic --noinput
-
-# Admin-Account erstellen
-docker compose run --rm api python3 manage.py createsuperuser
-
-# Alle Services starten
-docker compose up -d
-sleep 15
-
-# Prüfen ob API läuft
-curl -s https://api.DEINE-DOMAIN.at/graphql/ \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{shop{name}}"}'
-```
-
-### 7. Storefront einrichten
-
-```bash
-cd storefront
-
-# .env konfigurieren
-cat > .env << EOF
-NEXT_PUBLIC_DEFAULT_CHANNEL=default-channel
-NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/
-EOF
-
-# Dependencies installieren
-pnpm install
-pnpm approve-builds   # Alle auswählen und bestätigen
-
-# GraphQL Types generieren
-NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/ pnpm run generate:all
-
-# Bauen
-NEXT_OUTPUT=standalone \
-NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/ \
-NEXT_PUBLIC_DEFAULT_CHANNEL=default-channel \
-npx next build
-
-# Statische Dateien kopieren
-cp -r public .next/standalone/public
-cp -r .next/static .next/standalone/.next/static
-
-cd ..
-```
-
-### 8. Storefront als systemd Service einrichten
-
-```bash
-sudo tee /etc/systemd/system/saleor-storefront.service << 'EOF'
-[Unit]
-Description=Saleor Storefront (Next.js)
-After=network.target docker.service
-Wants=docker.service
-
-[Service]
-Type=simple
-User=webshopadmin
-WorkingDirectory=/home/webshopadmin/saleor-production/storefront
-Environment=NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/
-Environment=PORT=3000
-Environment=NODE_ENV=production
-ExecStart=/usr/bin/node .next/standalone/server.js
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# DEINE-DOMAIN.at durch deine echte Domain ersetzen!
-sudo nano /etc/systemd/system/saleor-storefront.service
-
-sudo systemctl daemon-reload
-sudo systemctl enable saleor-storefront
-sudo systemctl start saleor-storefront
-```
-
-### 9. Firewall für Docker → Storefront
-
-```bash
-# Caddy (Docker) muss den Storefront (Host :3000) erreichen können
-sudo ufw allow from 172.20.0.0/24 to any port 3000 proto tcp comment "Docker frontend to storefront"
-```
-
-### 10. Prüfen ob alles läuft
-
-```bash
-# Alle Container
-docker compose ps
-
-# Storefront
-sudo systemctl status saleor-storefront
-
-# Websites testen
-curl -s -o /dev/null -w "%{http_code}" -L https://shop.DEINE-DOMAIN.at/
-curl -s -o /dev/null -w "%{http_code}" https://api.DEINE-DOMAIN.at/graphql/ -H "Content-Type: application/json" -d '{"query":"{shop{name}}"}'
-curl -s -o /dev/null -w "%{http_code}" https://admin.DEINE-DOMAIN.at/
-```
-
----
-
-## Storefront anpassen
-
-Das Storefront ist ein frischer Clone von [github.com/saleor/storefront](https://github.com/saleor/storefront) mit folgenden Anpassungen:
-
-### Dateien die angepasst werden müssen
-
-| Datei | Was anpassen |
-|-------|-------------|
-| `storefront/.env` | API-URL und Channel-Slug |
-| `storefront/src/config/brand.ts` | Shop-Name, Tagline, Beschreibung |
-| `storefront/src/config/locale.ts` | Sprache, Locale, Währung |
-| `storefront/src/styles/brand.css` | Farbschema (CSS-Variablen) |
-| `storefront/src/ui/components/shared/logo.tsx` | Logo-Komponente |
-| `storefront/public/logo-*.png` | Logo-Datei |
-
-### Nach Änderungen neu bauen
-
-```bash
-cd ~/saleor-production/storefront
-rm -rf .next
-NEXT_OUTPUT=standalone \
-NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/ \
-NEXT_PUBLIC_DEFAULT_CHANNEL=DEIN-CHANNEL \
-npx next build
-cp -r public .next/standalone/public
-cp -r .next/static .next/standalone/.next/static
-sudo systemctl restart saleor-storefront
-```
-
----
-
-## Dashboard — Inhalte verwalten
-
-Alle Inhalte werden über das Saleor Dashboard verwaltet: `https://admin.DEINE-DOMAIN.at`
-
-### Landing Page Texte
-
-Unter **Content → Pages** findest du diese Seiten:
-
-| Page (Slug) | Steuert | Titel = | Inhalt = |
-|---|---|---|---|
-| `landing-hero` | Hero-Sektion oben | Große Überschrift | Tagline/Untertitel |
-| `landing-sortiment` | Kategorien-Überschrift | z.B. "Unsere Edelbrände" | Beschreibungstext |
-| `landing-bestseller` | Bestseller-Überschrift | z.B. "Bestseller" | Beschreibungstext |
-| `landing-qualitaet` | Qualitätsmerkmale | z.B. "Unser Versprechen" | Je Absatz: `Titel — Beschreibung` |
-| `landing-destillation` | Destillations-Sektion | z.B. "Die Kunst der Destillation" | Absätze mit Text |
-| `landing-about` | Über uns | z.B. "Über die Edelbrandfreunde" | Geschichte in Absätzen |
-
-### Statische Seiten
-
-| Page (Slug) | URL | Inhalt |
-|---|---|---|
-| `impressum` | /pages/impressum | Impressum |
-| `datenschutz` | /pages/datenschutz | Datenschutzerklärung |
-| `agb` | /pages/agb | AGB |
-| `kontakt` | /pages/kontakt | Kontaktseite |
-| `versand` | /pages/versand | Versandinfos |
-| `widerruf` | /pages/widerruf | Widerrufsbelehrung |
-
-### Navigation
-
-Unter **Content → Navigation:**
+## CMS — Inhalte im Dashboard verwalten
+
+Alle Inhalte werden über das Dashboard verwaltet: **https://admin.edelbrandfreunde.at**
+
+### Produkte verwalten
+
+| Was | Wo |
+|-----|-----|
+| Produkt anlegen/bearbeiten | Catalog → Products |
+| Preis ändern | Catalog → Products → Produkt → Variants → Price |
+| Bilder hochladen | Catalog → Products → Produkt → Media |
+| Badge setzen (Bestseller, Limitiert) | Catalog → Products → Metadata → key: `badge` |
+| Kategorie zuweisen | Catalog → Products → Produkt → Category |
+| Bestseller festlegen | Catalog → Collections → "featured-products" |
+
+### Produktattribute (vom Code gelesen)
+
+| Attribut | Slug | Anzeige auf der Website |
+|----------|------|------------------------|
+| Alkoholgehalt | `alkoholgehalt` | "40% vol." auf Karte + PDP |
+| Inhalt | `inhalt` | "0,5l" + Grundpreis/Liter berechnet |
+| Sorte | `sorte` | Sortenbeschreibung auf der Karte |
+| Jahrgang | `jahrgang` | "Jahrgang 2021" auf der Karte |
+
+### Produkt-Metadata (key → value)
+
+| Key | Beispiel-Value | Anzeige |
+|-----|---------------|---------|
+| `badge` | Bestseller / Limitiert / Unikat | Badge oben links auf der Karte |
+| `award` | Gold · Destillata 2023 | Auszeichnung auf der PDP |
+| `batch_size` | 48 | "Kleine Auflage · 48 Flaschen" auf PDP |
+| `jahrgang` | 2021 | Jahrgang auf Karte + PDP |
+| `herkunft` | Schwallenbach, Wachau | Herkunftsangabe auf PDP |
+
+### Kategorie-Metadata
+
+| Key | Beispiel-Value | Anzeige |
+|-----|---------------|---------|
+| `emoji` | 🍑 | Emoji neben Kategoriename (Fallback-Karten) |
+
+### CMS-Seiten (Content → Pages)
+
+| Slug | Steuert | Format |
+|------|---------|--------|
+| `landing-hero` | Hero: Titel + Tagline | Titel = Überschrift, Inhalt = Untertitel |
+| `landing-sortiment` | Kategorien-Sektion | Titel + Beschreibung |
+| `landing-bestseller` | Bestseller-Sektion | Titel + Beschreibung |
+| `landing-qualitaet` | Qualitäts-Sektion | Je Absatz: "Titel — Beschreibung" |
+| `landing-destillation` | Destillation-Sektion | Titel + Absätze |
+| `landing-about` | Über uns-Sektion | Titel + Absätze |
+| `products-hero` | Produktseite Hero-Band | Titel = Überschrift, Inhalt = Motto |
+| `products-trust-bar` | Trust-Bar über Produktgrid | Pipe-getrennt: `Text1\|Text2\|Text3` |
+| `products-price-ranges` | Preisfilter-Bereiche | `0-30:Unter €30\|30-50:€30 – €50\|...` |
+| `pdp-trust-signals` | Trust unter Warenkorb-Button | Pipe-getrennt: `Signal1\|Signal2` |
+| `impressum` | Impressum (Pflicht) | Rechtlicher Text |
+| `agb` | AGB (Pflicht) | Rechtlicher Text |
+| `datenschutz` | Datenschutzerklärung (Pflicht) | Rechtlicher Text |
+| `widerruf` | Widerrufsbelehrung (Pflicht) | Text + Muster-Formular |
+| `versand` | Versand & Lieferung | Versandinfos |
+| `kontakt` | Kontaktseite | Kontaktdaten |
+| `jugendschutz` | Jugendschutzhinweis (Pflicht) | NÖ JG §18 |
+
+### Navigation (Content → Navigation)
 
 | Menü-Slug | Steuert |
-|---|---|
-| `navbar` | Header-Menü oben |
-| `footer` | Footer-Links unten |
-
-### Produkte & Katalog
-
-| Was | Wo im Dashboard |
-|---|---|
-| Produkte anlegen | Catalog → Products → Create |
-| Kategorien | Catalog → Categories |
-| Bestseller festlegen | Catalog → Collections → "Featured Products" → Produkte zuweisen |
-| Versandzone | Configuration → Shipping Methods |
-| Steuern | Configuration → Taxes |
-| Payment (Stripe) | Configuration → Plugins → Stripe |
+|-----------|---------|
+| `navbar` | Header-Menü |
+| `footer` | Footer-Links (3 Spalten mit Kindern) |
 
 ---
 
-## Storefront wiederherstellen
+## Rechtliche Hinweise (Abfindungsbrennerei)
 
-Falls der Server neu aufgesetzt wird oder die `storefront/` gelöscht wurde — der komplette angepasste Source-Code liegt in `storefront-custom/`:
+| Anforderung | Status | Wo |
+|------------|--------|-----|
+| Impressum (ECG §5) | Im CMS | Content → Pages → `impressum` |
+| AGB (FAGG) | Im CMS | Content → Pages → `agb` |
+| Datenschutz (DSGVO) | Im CMS | Content → Pages → `datenschutz` |
+| Widerruf (FAGG §11) | Im CMS | Content → Pages → `widerruf` |
+| Jugendschutz 18+ (NÖ JG §18) | Im CMS + Code | Checkout-Pflichtfeld geplant |
+| "Unter Abfindung hergestellt" | Im Code | Automatisch auf allen Produkten |
+| Grundpreis pro Liter (PrAG) | Im Code | Berechnet aus `inhalt` Attribut |
+| Nur Österreich (§57 AlkStG) | In AGB + Versand | CMS-Seiten |
+| Nur Letztverbraucher | In AGB | CMS-Seite |
 
-```bash
-# 1. Source kopieren
-cp -r storefront-custom storefront
-cd storefront
+---
 
-# 2. Environment konfigurieren
-cp .env.example .env
-nano .env
-# NEXT_PUBLIC_DEFAULT_CHANNEL und NEXT_PUBLIC_SALEOR_API_URL anpassen
+## DNS-Records
 
-# 3. Dependencies installieren
-pnpm install
-pnpm approve-builds
-
-# 4. GraphQL Types generieren
-NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/ pnpm run generate:all
-
-# 5. Bauen
-NEXT_OUTPUT=standalone \
-NEXT_PUBLIC_SALEOR_API_URL=https://api.DEINE-DOMAIN.at/graphql/ \
-NEXT_PUBLIC_DEFAULT_CHANNEL=oe \
-npx next build
-
-# 6. Statische Dateien kopieren
-cp -r public .next/standalone/public
-cp -r .next/static .next/standalone/.next/static
-
-# 7. Service starten
-sudo systemctl restart saleor-storefront
 ```
+A    shop.edelbrandfreunde.at     37.27.252.223
+A    api.edelbrandfreunde.at      37.27.252.223
+A    admin.edelbrandfreunde.at    37.27.252.223
+A    mail.edelbrandfreunde.at     37.27.252.223
 
-### Webhook Cache-Invalidierung einrichten (optional)
-
-Damit Änderungen im Saleor Dashboard sofort auf der Website erscheinen:
-
-```bash
-# 1. Secrets generieren
-openssl rand -hex 32  # → REVALIDATE_SECRET
-
-# 2. In die systemd Service-Datei eintragen
-sudo nano /etc/systemd/system/saleor-storefront.service
-# Unter [Service] hinzufügen:
-#   Environment=REVALIDATE_SECRET=<dein-secret>
-#   Environment=NEXT_PUBLIC_STOREFRONT_URL=https://shop.edelbrandfreunde.at
-
-# 3. Service neu laden
-sudo systemctl daemon-reload
-sudo systemctl restart saleor-storefront
-
-# 4. Im Saleor Dashboard:
-#    Configuration → Webhooks → Neuen Webhook erstellen
-#    URL: https://shop.edelbrandfreunde.at/api/revalidate
-#    Secret Key: <das gleiche Secret wie oben>
-#    Events: Product Updated, Category Updated, Collection Updated, Page Updated
+# E-Mail (wenn Port 25 freigeschaltet)
+TXT  @                 v=spf1 ip4:37.27.252.223 ~all
+TXT  mail._domainkey   v=DKIM1; h=sha256; k=rsa; s=email; p=MIIBIjAN...
+TXT  _dmarc            v=DMARC1; p=none; rua=mailto:noreply@edelbrandfreunde.at
 ```
 
 ---
 
-## Dateien-Übersicht
+## Dateistruktur
 
 ```
 saleor-production/
-├── docker-compose.yml     # Container-Orchestrierung
-├── Caddyfile              # Reverse Proxy Konfiguration
-├── .env.example           # Template für .env (Passwörter)
-├── .env.api.example       # Template für .env.api (Saleor Konfig)
-├── entrypoint.sh          # RSA-Key Loader für Saleor
-├── deploy.sh              # Erstinstallation
-├── update.sh              # Update-Script
-├── README.md              # Diese Datei
+├── docker-compose.yml          # Alle Container
+├── Caddyfile                   # Reverse Proxy + TLS
+├── CLAUDE.md                   # Regeln für Claude Code
+├── README.md                   # Diese Datei
 │
-├── storefront-custom/     # ✅ Angepasster Storefront Source (in Git)
-│   ├── src/               # React/Next.js Source-Code
-│   ├── public/            # Statische Assets (Logo, Favicons)
-│   ├── package.json       # Dependencies
-│   └── .env.example       # Template für .env
+├── storefront-custom/          # Source Code (in Git)
+│   ├── src/                    # Next.js + React
+│   ├── public/                 # Statische Assets + Videos
+│   └── package.json            # Dependencies
 │
-├── .env                   # ⛔ NICHT in Git (Passwörter)
-├── .env.api               # ⛔ NICHT in Git (Secrets)
-├── rsa_private.pem        # ⛔ NICHT in Git (JWT-Key)
+├── postfix-data/dkim/          # DKIM Keys (nicht in Git)
 │
-└── storefront/            # ⛔ NICHT in Git (Live-Build, separater Clone)
-    ├── .env               # Channel + API-URL
-    ├── src/styles/brand.css
-    ├── src/config/brand.ts
-    └── ...
+├── .env                        # DB/Redis Passwörter (nicht in Git)
+├── .env.api                    # Saleor Config + Secrets (nicht in Git)
+├── rsa_private.pem             # JWT Signing Key (nicht in Git)
+│
+└── storefront/                 # Live-Build (nicht in Git)
+    └── .next/standalone/       # Produktions-Build
 ```
-
----
-
-## Updates
-
-```bash
-cd ~/saleor-production
-./update.sh
-```
-
-Das Script:
-1. Zieht neue Docker-Images
-2. Startet Backend-Container neu
-3. Führt DB-Migrationen aus
-4. Baut das Storefront neu
-5. Startet den Storefront-Service neu
-
----
-
-## Backups
-
-### Datenbank sichern
-
-```bash
-docker compose exec -T db pg_dump -U saleor saleor | gzip > backup_$(date +%Y%m%d).sql.gz
-```
-
-### Datenbank wiederherstellen
-
-```bash
-gunzip -c backup_DATUM.sql.gz | docker compose exec -T db psql -U saleor saleor
-```
-
-### Ganzen Server sichern
-
-Hetzner Cloud Console → Server → Backups aktivieren (~1.50 EUR/Monat).
 
 ---
 
@@ -521,36 +258,66 @@ Hetzner Cloud Console → Server → Backups aktivieren (~1.50 EUR/Monat).
 ### Storefront zeigt 502
 
 ```bash
-# Prüfe ob der Storefront-Service läuft
-sudo systemctl status saleor-storefront
-
-# Prüfe ob Caddy den Host erreichen kann
-docker compose exec caddy wget -qO- --timeout=3 http://host.docker.internal:3000/
-
-# Falls nicht: UFW-Regel prüfen
-sudo ufw status | grep 3000
+sudo systemctl status saleor-storefront     # Läuft der Service?
+journalctl -u saleor-storefront --no-pager -n 20  # Fehler?
+docker compose exec caddy wget -qO- http://host.docker.internal:3000/  # Caddy → Storefront?
 ```
 
-### API gibt 301 Redirect
+### Bilder werden nicht angezeigt
 
-Die API redirected HTTP → HTTPS. Caddy muss den Header setzen:
-```
-header_up X-Forwarded-Proto https
-```
-Das ist in der Caddyfile bereits konfiguriert.
-
-### "Couldn't find all resumable slots"
-
-Cache-Problem. Lösung:
 ```bash
-cd ~/saleor-production/storefront
-rm -rf .next
-# Neu bauen (siehe "Nach Änderungen neu bauen")
+# Caddy muss das Media-Volume gemountet haben
+docker compose exec caddy ls /srv/media/   # Dateien da?
+curl -sI https://api.edelbrandfreunde.at/media/  # HTTP 200?
 ```
 
-### Produkte werden nicht angezeigt
+### Produkte nicht sichtbar
 
-1. Produkt ist dem Channel zugewiesen? (Dashboard → Products → Availability)
-2. Produkt ist veröffentlicht? (Published = Ja)
-3. Produkt hat Preis und Bestand?
-4. Featured Products: Ist das Produkt in der Collection "Featured Products"?
+1. Produkt dem Channel `oe` zugewiesen? (Dashboard → Products → Availability)
+2. Produkt publiziert? (Published = Ja)
+3. Preis und Bestand gesetzt?
+4. ISR-Cache abgelaufen? (Warte 5 min oder baue neu)
+
+### Build-Fehler "Property does not exist on type"
+
+```bash
+# GraphQL Types müssen nach Fragment-Änderungen neu generiert werden
+cd ~/saleor-production/storefront
+NEXT_PUBLIC_SALEOR_API_URL=https://api.edelbrandfreunde.at/graphql/ pnpm run generate
+```
+
+### "Cannot find module server.js"
+
+Der Service wurde restartet während der Build noch lief. Einfach nochmal:
+```bash
+sudo systemctl restart saleor-storefront
+```
+
+---
+
+## Sicherheit
+
+| Maßnahme | Status |
+|----------|--------|
+| SSH nur mit Key, kein Root-Login | Aktiv |
+| UFW Firewall (nur 22, 80, 443) | Aktiv |
+| Fail2Ban | Aktiv |
+| HSTS + CSP + Security Headers | Via Caddy |
+| Docker no-new-privileges | Alle Container |
+| Resource Limits (RAM, CPU, PIDs) | Alle Container |
+| Secrets nicht in Git | .gitignore |
+| Postfix Relay-Restrictions | Konfiguriert |
+| DKIM + SPF + DMARC | DNS-Records nötig |
+| Checkout Cookie httpOnly | Aktiv |
+
+---
+
+## Noch offen (Blocker für Go-Live)
+
+| # | Was | Status |
+|---|-----|--------|
+| 1 | **Zahlungsanbieter (Stripe)** | Fehlt — ohne das kann niemand bezahlen |
+| 2 | **E-Mail (Port 25 oder Relay)** | Postfix steht, Port 25 gesperrt, Relay nötig |
+| 3 | **Altersverifikation-Checkbox** im Checkout | Geplant |
+| 4 | **Impressum ausfüllen** — [BITTE AUSFÜLLEN] Platzhalter ersetzen | Dashboard |
+| 5 | **Dashboard Passwort ändern** | Temporäres Passwort aktiv |
