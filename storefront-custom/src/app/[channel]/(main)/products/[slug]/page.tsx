@@ -8,7 +8,7 @@ import xss from "xss";
 import { executePublicGraphQL } from "@/lib/graphql";
 import { ProductDetailsDocument, LandingPageContentDocument, type ProductDetailsQuery } from "@/gql/graphql";
 import { parseEditorJSToText } from "@/lib/editorjs";
-import { buildPageMetadata, buildProductJsonLd } from "@/lib/seo";
+import { buildPageMetadata, buildProductJsonLd, jsonLdScriptProps } from "@/lib/seo";
 import { Breadcrumbs } from "@/ui/components/breadcrumbs";
 import {
 	ProductGallery,
@@ -171,12 +171,7 @@ async function ProductContent({
 		<div className="flex min-h-screen flex-col bg-background">
 			{lcpImageUrl && <link rel="preload" as="image" href={lcpImageUrl} fetchPriority="high" />}
 
-			{productJsonLd && (
-				<script
-					type="application/ld+json"
-					dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
-				/>
-			)}
+			{productJsonLd && <script {...jsonLdScriptProps(productJsonLd)} />}
 
 			{/* div, not <main> — already inside the layout's <main>. A nested
 			    <main> confuses document.querySelector("main") used by PageTransition. */}

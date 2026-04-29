@@ -107,6 +107,20 @@ export function buildProductJsonLd(options: {
 }
 
 /**
+ * Stringify JSON-LD safely for inline <script type="application/ld+json"> tags.
+ * Escapes < > & and U+2028/U+2029 which would otherwise break out of the script tag
+ * or terminate the JSON parser early.
+ */
+export function escapeJsonLd(data: unknown): string {
+	return JSON.stringify(data)
+		.replace(/</g, "\\u003c")
+		.replace(/>/g, "\\u003e")
+		.replace(/&/g, "\\u0026")
+		.replace(/\u2028/g, "\\u2028")
+		.replace(/\u2029/g, "\\u2029");
+}
+
+/**
  * JSON-LD Script component helper
  *
  * @example
@@ -116,6 +130,6 @@ export function jsonLdScriptProps(data: object | null) {
 	if (!data) return null;
 	return {
 		type: "application/ld+json",
-		dangerouslySetInnerHTML: { __html: JSON.stringify(data) },
+		dangerouslySetInnerHTML: { __html: escapeJsonLd(data) },
 	};
 }

@@ -18,6 +18,20 @@ import { getFormString, getFormStringOptional } from "@/ui/components/account/fo
 
 type ActionResult = { success: true } | { success: false; error: string };
 
+const ALLOWED_REDIRECT_ORIGINS = [
+	process.env.NEXT_PUBLIC_STOREFRONT_URL,
+	process.env.NEXT_PUBLIC_SALEOR_API_URL?.replace("/graphql/", "").replace("/graphql", ""),
+].filter(Boolean);
+
+function isAllowedRedirectUrl(url: string): boolean {
+	try {
+		const parsed = new URL(url);
+		return ALLOWED_REDIRECT_ORIGINS.some((origin) => origin && parsed.origin === new URL(origin).origin);
+	} catch {
+		return false;
+	}
+}
+
 export async function updateProfile(formData: FormData): Promise<ActionResult> {
 	const firstName = getFormString(formData, "firstName");
 	const lastName = getFormString(formData, "lastName");
@@ -161,6 +175,10 @@ export async function setDefaultAddress(formData: FormData): Promise<ActionResul
 export async function requestAccountDeletion(formData: FormData): Promise<ActionResult> {
 	const redirectUrl = getFormString(formData, "redirectUrl");
 	const channel = getFormStringOptional(formData, "channel");
+
+	if (!isAllowedRedirectUrl(redirectUrl)) {
+		return { success: false, error: "Ungültige Weiterleitungs-URL" };
+	}
 
 	const result = await executeAuthenticatedGraphQL(AccountRequestDeletionDocument, {
 		variables: { redirectUrl, channel },

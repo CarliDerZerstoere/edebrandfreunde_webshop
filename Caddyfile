@@ -53,17 +53,10 @@ api.edelbrandfreunde.at {
 }
 
 admin.edelbrandfreunde.at {
-	# ⚠️  WICHTIG: Basic Auth aktivieren für zusätzlichen Schutz!
-	# Ohne Basic Auth ist das Dashboard nur durch Saleors eigene Authentifizierung geschützt.
-	#
-	# So aktivieren:
-	#   1. Hash generieren: docker exec -it saleor-production-caddy-1 caddy hash-password
-	#   2. Unten einsetzen und Kommentarzeichen entfernen
-	#   3. docker compose restart caddy
-	#
-	# basicauth {
-	#     admin $2a$14$REPLACE_WITH_BCRYPT_HASH
-	# }
+	# Basic Auth aktiv. Klartext-Credentials liegen in /home/webshopadmin/saleor-production/.admin-credentials (chmod 600).
+	basicauth {
+		admin $2a$14$8R5Y2QQF.NRh7FAeodfcgu69E/ZgBNp9wCuAklyiA./SoGmOyknXO
+	}
 	reverse_proxy dashboard:80
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"

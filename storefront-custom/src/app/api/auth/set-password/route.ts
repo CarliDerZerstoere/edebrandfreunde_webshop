@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { executeRawGraphQL, asValidationError, getUserMessage } from "@/lib/graphql";
+import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE, encodeCookieName } from "@/lib/auth/constants";
 
 const SET_PASSWORD_MUTATION = `
   mutation SetPassword($email: String!, $token: String!, $password: String!) {
@@ -72,23 +73,39 @@ export async function POST(request: NextRequest) {
 	}
 
 	if (setPassword?.token && setPassword?.refreshToken) {
-		// Set auth cookies
-		const cookieStore = await cookies();
+		// Set auth cookies under SDK-compatible names so the client-side
+		// Saleor Auth SDK picks up the session immediately after redirect.
+		const saleorApiUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL;
+		if (!saleorApiUrl) {
+			console.error("Missing NEXT_PUBLIC_SALEOR_API_URL env variable");
+			return NextResponse.json(
+				{ errors: [{ message: "Serverkonfiguration fehlerhaft", code: "SERVER_MISCONFIGURED" }] },
+				{ status: 500 },
+			);
+		}
 
-		cookieStore.set("token", setPassword.token, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+		const accessKey = encodeCookieName(`${saleorApiUrl}+saleor_auth_access_token`);
+		const refreshKey = encodeCookieName(`${saleorApiUrl}+saleor_auth_refresh_token`);
+
+		const cookieStore = await cookies();
+		const isSecure = process.env.NODE_ENV === "production";
+
+		// httpOnly: false is intentional — the client-side SDK must be able
+		// to read these cookies to attach the Authorization header on requests.
+		cookieStore.set(accessKey, setPassword.token, {
+			httpOnly: false,
+			secure: isSecure,
 			sameSite: "lax",
 			path: "/",
-			maxAge: 60 * 60, // 1 hour
+			maxAge: ACCESS_TOKEN_MAX_AGE,
 		});
 
-		cookieStore.set("refreshToken", setPassword.refreshToken, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
+		cookieStore.set(refreshKey, setPassword.refreshToken, {
+			httpOnly: false,
+			secure: isSecure,
 			sameSite: "lax",
 			path: "/",
-			maxAge: 60 * 60 * 24 * 30, // 30 days
+			maxAge: REFRESH_TOKEN_MAX_AGE,
 		});
 
 		return NextResponse.json({
