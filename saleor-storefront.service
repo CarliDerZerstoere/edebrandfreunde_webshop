@@ -1,0 +1,21 @@
+[Unit]
+Description=Saleor Storefront (Next.js)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=webshopadmin
+WorkingDirectory=/home/webshopadmin/saleor-production/storefront
+EnvironmentFile=/home/webshopadmin/saleor-production/storefront/.env
+Environment=PORT=3000
+Environment=NODE_ENV=production
+# HOSTNAME muss 0.0.0.0 sein (Default), damit Caddy aus dem Docker-Container
+# über `host.docker.internal` (= host-gateway, ~172.17.0.1) verbinden kann.
+# UFW blockt Port 3000 vom Internet — externer Zugang nur via Caddy auf 80/443.
+ExecStart=/usr/bin/node .next/standalone/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

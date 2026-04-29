@@ -2,6 +2,7 @@
 .env
 .env.api
 *.pem
+.admin-credentials
 
 # Storefront (separater Clone von github.com/saleor/storefront)
 storefront/
@@ -16,6 +17,11 @@ storefront-custom/node_modules/
 storefront-custom/.next/
 storefront-custom/.env
 
+# Root-level Build-Artefakte und Sandbox-Verzeichnis
+# /.next/ ist Build-Output, /src/ wäre eine versehentliche Kopie von storefront-custom/src/
+/.next/
+/src/
+
 # Docker Volumes (lokal)
 saleor-db/
 saleor-redis/
@@ -24,5 +30,8 @@ saleor-media/
 # OS
 .DS_Store
 
-# Postfix DKIM keys
-postfix-data/dkim/*.private
+# Postfix Runtime-State (DKIM Keys + DNS-TXT Outputs)
+postfix-data/
+
+# Temporäre / abgeleitete Service-Vorlagen — die echte saleor-storefront.service ist committed
+*.service.new
