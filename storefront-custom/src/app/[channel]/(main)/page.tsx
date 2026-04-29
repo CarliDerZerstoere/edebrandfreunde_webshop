@@ -8,7 +8,7 @@ import {
 import { executePublicGraphQL } from "@/lib/graphql";
 import { brandConfig } from "@/config/brand";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
-import { parseEditorJSToHtml, parseEditorJSToText } from "@/lib/editorjs";
+import { parseEditorJSToHtml, parseEditorJSToText, parseEditorJSQualities } from "@/lib/editorjs";
 
 // Dynamic components
 import { HeroEntrance } from "@/ui/components/hero-entrance";
@@ -18,6 +18,7 @@ import { TextReveal } from "@/ui/components/text-reveal";
 import { MarqueeBanner } from "@/ui/components/marquee-banner";
 import { ProductCarousel } from "@/ui/components/product-carousel";
 import { QualityCounter } from "@/ui/components/quality-counter";
+import { PixelStoryWidget } from "@/ui/components/pixel-story/pixel-story-widget";
 
 const HERO_VIDEO_SOURCES = [
 	"/videos/hero-1.mp4",
@@ -400,25 +401,18 @@ function FeaturedSection({ page, products }: { page: any; products: any[] }) {
  * Qualität
  * Dashboard: Content → Pages → "landing-qualitaet"
  *   Titel = Überschrift (z.B. "Unser Versprechen")
- *   Inhalt = Je Absatz ein Merkmal, Format:
- *            "Titel — Beschreibung"
- *            z.B. "100% Handarbeit — Jeder Edelbrand wird..."
+ *   Inhalt = Strukturiert mit H3 + Absätzen:
+ *            [H3] Kartentitel
+ *            [Absatz] Beschreibung dazu
+ *            Zeilen die mit // anfangen = Kommentare (werden ignoriert)
  * ============================================ */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function QualitySection({ page }: { page: any }) {
 	if (!page) return null;
 
-	const contentHtml = parseEditorJSToHtml(page.content);
-	if (!contentHtml || contentHtml.length === 0) return null;
-
-	const qualities = contentHtml.map((html, i) => {
-		const text = html.replace(/<[^>]*>/g, "");
-		const dashIdx = text.indexOf("—");
-		const title = dashIdx > 0 ? text.slice(0, dashIdx).trim() : text.slice(0, 30).trim();
-		const description = dashIdx > 0 ? text.slice(dashIdx + 1).trim() : text;
-		return { title, description, n: i };
-	});
+	const qualities = parseEditorJSQualities(page.content);
+	if (!qualities || qualities.length === 0) return null;
 
 	return (
 		<section
@@ -500,64 +494,16 @@ function DestillationSection({ page }: { page: any }) {
 						)}
 					</RevealOnScroll>
 
-					{/* Illustration column — copper still with floating animation */}
+					{/* Illustration column — interactive pixel-art schnapps story */}
 					<RevealOnScroll delay={180} slideDistance={24}>
 						<div
-							className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-lg lg:aspect-auto lg:min-h-[520px]"
+							className="relative flex aspect-[4/5] flex-col items-center justify-center gap-6 overflow-hidden rounded-lg p-6 sm:p-8 lg:aspect-auto lg:min-h-[520px]"
 							style={{
 								background:
 									"radial-gradient(ellipse at 50% 70%, oklch(0.515 0.082 155 / 0.35) 0%, oklch(0.198 0.034 155) 65%)",
 							}}
 						>
-							{/* Film-grain noise inside illustration box */}
-							<div
-								className="absolute inset-0 opacity-[0.04]"
-								aria-hidden="true"
-								style={{
-									backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-								}}
-							/>
-
-							{/* Floating copper still SVG */}
-							<svg
-								viewBox="0 0 200 280"
-								className="still-float relative z-10 h-72 w-auto opacity-25"
-								fill="none"
-								xmlns="http://www.w3.org/2000/svg"
-								aria-hidden="true"
-							>
-								<ellipse cx="100" cy="210" rx="55" ry="18" stroke="currentColor" strokeWidth="1.5" className="text-accent/40" />
-								<path
-									d="M55 210 L48 130 Q48 85 100 85 Q152 85 152 130 L145 210Z"
-									stroke="currentColor"
-									strokeWidth="1.5"
-									fill="none"
-									className="text-accent/40"
-								/>
-								<path d="M100 85 L100 50" stroke="currentColor" strokeWidth="1.5" className="text-accent/40" />
-								<ellipse cx="100" cy="48" rx="16" ry="8" stroke="currentColor" strokeWidth="1.5" className="text-accent/40" />
-								<path
-									d="M116 48 Q135 42 148 58 Q162 78 155 100"
-									stroke="currentColor"
-									strokeWidth="1.5"
-									fill="none"
-									className="text-accent/40"
-								/>
-								<ellipse cx="155" cy="108" rx="10" ry="6" stroke="currentColor" strokeWidth="1" className="text-accent/25" />
-								<path
-									d="M155 114 L155 180 Q155 195 140 195 L130 195"
-									stroke="currentColor"
-									strokeWidth="1.5"
-									fill="none"
-									className="text-accent/40"
-								/>
-							</svg>
-							<p
-								className="absolute bottom-6 z-10 text-xs tracking-[0.2em] uppercase text-accent/20"
-								aria-hidden="true"
-							>
-								Kupferkessel &middot; Niederösterreich
-							</p>
+							<PixelStoryWidget />
 						</div>
 					</RevealOnScroll>
 				</div>

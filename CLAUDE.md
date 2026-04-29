@@ -111,8 +111,27 @@ cp -r .next/static .next/standalone/.next/static
 - Ohne Validierung: Open Redirect Vulnerability via Phishing-Emails.
 
 ### JWT nicht im Response Body
-- `set-password/route.ts` gibt den JWT Token NUR als httpOnly Cookie zurück.
-- NIEMALS den Token auch im JSON Response Body mitsenden.
+- `set-password/route.ts` setzt Tokens als Cookies (mit den encoded SDK-Cookie-Namen via `encodeCookieName`), NICHT im Response Body.
+- Wichtig: SDK-Cookies sind **nicht** httpOnly (Auth-SDK liest sie via document.cookie), aber konsistent mit `auth-provider.tsx` und `lib/auth/server.ts`.
+- Cookie-Namen: `encodeCookieName(\`${saleorApiUrl}+saleor_auth_access_token\`)` und `+saleor_auth_refresh_token`. Lifetimes aus `lib/auth/constants.ts`.
+
+### JSON-LD Escape (XSS-Schutz)
+- `lib/seo/json-ld.ts` exportiert `escapeJsonLd()` — escaped `<`, `>`, `&`, U+2028, U+2029.
+- IMMER `<script {...jsonLdScriptProps(data)} />` verwenden, NIEMALS `JSON.stringify` direkt in `dangerouslySetInnerHTML` für `application/ld+json`.
+
+### redirectUrl Validierung in Server Actions
+- `register/route.ts`, `reset-password/route.ts` UND `account/actions.ts` (requestAccountDeletion) validieren `redirectUrl` gegen eine Whitelist (`NEXT_PUBLIC_STOREFRONT_URL` + API-Origin).
+- Bei neuen Server Actions die `redirectUrl` annehmen: gleiche `isAllowedRedirectUrl()` Helper-Logik einbauen.
+
+### Caddy Basic Auth fürs Admin-Dashboard
+- `admin.edelbrandfreunde.at` ist via `basicauth` zusätzlich geschützt (Caddyfile aktiviert).
+- Klartext-Credentials in `/home/webshopadmin/saleor-production/.admin-credentials` (chmod 600, in .gitignore).
+- Hash neu generieren: `docker exec saleor-production-caddy-1 caddy hash-password`.
+
+### Webhook-Secrets
+- `REVALIDATE_SECRET` und `SALEOR_WEBHOOK_SECRET` sind in `storefront/.env`.
+- Werden via `EnvironmentFile=` in der systemd-Unit geladen (siehe `saleor-storefront.service.new` als Vorlage).
+- Saleor-Dashboard-Webhook: `SALEOR_WEBHOOK_SECRET` muss als HMAC-Secret beim Webhook eingetragen sein.
 
 ### Query-String Secrets entfernt
 - `api-auth.ts` akzeptiert Secrets NUR via `Authorization: Bearer` Header.
@@ -137,6 +156,7 @@ cp -r .next/static .next/standalone/.next/static
 - `QualityCounter` — Animated counting numbers
 - `MarqueeBanner` — Infinite horizontal ticker
 - `PageTransition` — Claude.ai-style Dissolve (manipuliert `<main>` direkt, rendert kein DOM)
+- `PixelStoryWidget` — 5-stufige Pixel-Art-Animation der Schnapsherstellung. Sitzt in der DestillationSection. Szenen sind 24x24 Grids in `pixel-story/scenes.ts`, gerendert via box-shadow auf einem Pseudo-Element. Mikro-Animationen (Dampf, Bubbles, Tropfen, Glas-Füllung) laufen ausschließlich auf `transform`/`opacity`/`filter`, nie auf `box-shadow` direkt — das ist GPU-composited statt Repaint pro Frame.
 
 ### Tailwind Custom Tokens
 - `text-hero`: `clamp(3rem, 8vw, 10rem)` — fluid Hero-Schriftgröße

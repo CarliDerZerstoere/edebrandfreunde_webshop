@@ -18,6 +18,16 @@ interface EditorJSContent {
 }
 
 /**
+ * Filter out CMS comment blocks (text starting with "//").
+ */
+function filterComments(blocks: EditorJSBlock[]): EditorJSBlock[] {
+	return blocks.filter((block) => {
+		const text = (block.data?.text ?? "").replace(/<[^>]*>/g, "").trim();
+		return !text.startsWith("//");
+	});
+}
+
+/**
  * Check if a string is EditorJS JSON format
  */
 export function isEditorJSContent(content: string | null | undefined): boolean {
@@ -46,7 +56,8 @@ export function parseEditorJSToHtml(content: string | null | undefined): string[
 		if (!parsed.blocks || !Array.isArray(parsed.blocks)) {
 			return null;
 		}
-		return parser.parse(parsed).map((html: string) => xss(html));
+		const filtered = { ...parsed, blocks: filterComments(parsed.blocks) };
+		return parser.parse(filtered).map((html: string) => xss(html));
 	} catch {
 		// Not valid EditorJS JSON, return null
 		return null;
@@ -66,6 +77,61 @@ function stripHtmlTags(html: string): string {
 }
 
 /**
+ * Parse EditorJS content into structured quality items.
+ * Expects H3 headers as titles, followed by paragraphs as descriptions.
+ * Paragraphs starting with "//" are treated as comments and skipped.
+ * Paragraphs before the first header are ignored.
+ */
+export function parseEditorJSQualities(
+	content: string | null | undefined,
+): { title: string; description: string; n: number }[] | null {
+	if (!content) return null;
+
+	try {
+		const parsed = JSON.parse(content) as EditorJSContent;
+		if (!parsed.blocks || !Array.isArray(parsed.blocks)) return null;
+
+		const items: { title: string; description: string; n: number }[] = [];
+		let current: { title: string; descParts: string[] } | null = null;
+
+		for (const block of parsed.blocks) {
+			const text = stripHtmlTags(block.data?.text ?? "").trim();
+			if (!text) continue;
+
+			// Skip comment lines
+			if (text.startsWith("//")) continue;
+
+			if (block.type === "header") {
+				// Finish previous item
+				if (current) {
+					items.push({
+						title: current.title,
+						description: current.descParts.join(" "),
+						n: items.length,
+					});
+				}
+				current = { title: text, descParts: [] };
+			} else if (current) {
+				current.descParts.push(text);
+			}
+		}
+
+		// Don't forget the last item
+		if (current) {
+			items.push({
+				title: current.title,
+				description: current.descParts.join(" "),
+				n: items.length,
+			});
+		}
+
+		return items.length > 0 ? items : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Extract plain text from EditorJS JSON.
  * Useful for descriptions in hero sections, meta tags, etc.
  */
@@ -79,8 +145,8 @@ export function parseEditorJSToText(content: string | null | undefined): string 
 			return content;
 		}
 
-		// Extract text from all blocks
-		const texts = parsed.blocks
+		// Extract text from all blocks (skip // comments)
+		const texts = filterComments(parsed.blocks)
 			.map((block) => {
 				if (block.data?.text) {
 					return stripHtmlTags(block.data.text);
