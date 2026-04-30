@@ -92,8 +92,10 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 				data-testid="ProductCarousel"
 				className={[
 					"flex gap-4 overflow-x-auto pb-4 sm:gap-5",
-					// Scroll snap
-					"snap-x snap-mandatory",
+					// Scroll snap (proximity, not mandatory — otherwise the last
+					// cards can be unreachable on mobile when their snap-start
+					// position lies past max scrollLeft and the browser snaps back)
+					"snap-x snap-proximity",
 					// Hide scrollbar on webkit, keep functionality
 					"scrollbar-hide",
 					// Padding so first/last cards aren't clipped by the arrows
