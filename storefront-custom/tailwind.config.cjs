@@ -55,6 +55,8 @@ module.exports = {
 				sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
 				mono: ["var(--font-geist-mono)", "monospace"],
 				display: ["var(--font-display)", "Georgia", "serif"],
+				serif: ["var(--font-serif)", "Georgia", "serif"],
+				script: ["var(--font-script)", "cursive"],
 			},
 			fontSize: {
 				// Fluid display sizes — scale with viewport, no breakpoints

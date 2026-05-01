@@ -84,11 +84,21 @@ cp -r .next/static .next/standalone/.next/static
 ## CMS-Integration
 
 ### Alle Texte kommen aus dem Saleor Dashboard
-- Content → Pages: `landing-hero`, `landing-sortiment`, `landing-bestseller`, `landing-qualitaet`, `landing-destillation`, `landing-about`
+- Content → Pages: `landing-hero`, `landing-sortiment`, `landing-bestseller`, `landing-qualitaet`, `landing-about` (Brieftext der Willkommen-Sektion)
 - Catalog → Categories: Kategorie-Namen und Beschreibungen
 - Catalog → Collections → "Featured Products": Bestseller-Produkte
+- Catalog → Collections → "landing-jahrgaenge": Jahrgangs-Liste in der Willkommen-Sektion (siehe unten)
 - Content → Navigation: `navbar`, `footer`
 - **NIEMALS** editierbaren Text hardcoden.
+
+### Willkommen-Sektion: Jahrgangs-Liste über Produkt-Metadata
+- Collection-Slug: `landing-jahrgaenge` (Catalog → Collections)
+- Reihenfolge der Produkte in der Collection = Reihenfolge in der Liste
+- Pro Produkt zwei Metadata-Einträge im Dashboard setzen:
+  - `jahrgang` = `"2019"` (Jahreszahl)
+  - `status` = `"verfuegbar"` (Default → „Verfügbar"), `"letzte"` (→ „Letzte Flaschen") oder `"vergriffen"` (→ „Vergriffen", grau)
+- Wenn die Collection leer/nicht angelegt ist: die Komponente nutzt eine hardgecodete Fallback-Liste in `welcome-letter-section.tsx`.
+- Loader: `getLandingVintages()` in `app/[channel]/(main)/page.tsx`.
 
 ### Newlines in CMS-Text
 - `parseEditorJSToText()` verbindet Absätze mit `\n` (nicht Leerzeichen).

@@ -1,6 +1,6 @@
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Cormorant_Garamond } from "next/font/google";
+import { Cormorant_Garamond, EB_Garamond, Caveat } from "next/font/google";
 import "./globals.css";
 import { type ReactNode } from "react";
 import { rootMetadata } from "@/lib/seo";
@@ -20,6 +20,21 @@ const cormorant = Cormorant_Garamond({
 	display: "swap",
 });
 
+const ebGaramond = EB_Garamond({
+	subsets: ["latin", "latin-ext"],
+	weight: ["400", "500"],
+	style: ["normal", "italic"],
+	variable: "--font-serif",
+	display: "swap",
+});
+
+const caveat = Caveat({
+	subsets: ["latin", "latin-ext"],
+	weight: ["400", "500"],
+	variable: "--font-script",
+	display: "swap",
+});
+
 export const metadata = rootMetadata;
 
 export default function RootLayout(props: { children: ReactNode }) {
@@ -28,7 +43,7 @@ export default function RootLayout(props: { children: ReactNode }) {
 	return (
 		<html
 			lang={localeConfig.htmlLang}
-			className={`${GeistSans.variable} ${GeistMono.variable} ${cormorant.variable} min-h-dvh`}
+			className={`${GeistSans.variable} ${GeistMono.variable} ${cormorant.variable} ${ebGaramond.variable} ${caveat.variable} min-h-dvh`}
 		>
 			<body className="min-h-dvh font-sans">
 				{children}

@@ -419,3 +419,79 @@
 .nav-link-underline[data-active="true"]::after {
 	transform: scaleX(1);
 }
+
+/* ============================================================
+ * WILLKOMMEN — LETTER ON PARCHMENT
+ *
+ * Editorial layout: aged-paper letter (left) + brennereibuch
+ * sidebar (right). Paper has a procedural noise texture, deckle
+ * edge at the bottom, and a slight rotation for a hand-laid feel.
+ * The sidebar borrows ink-on-cream typography rules.
+ * ============================================================ */
+
+.welcome-letter {
+	/* Local rule color used by the right sidebar dividers. */
+	--ink-rule: oklch(0.96 0.012 90 / 0.16);
+	background: var(--card);
+	color: var(--foreground);
+}
+
+/* The aged-paper card. */
+.welcome-paper {
+	position: relative;
+	color: oklch(0.22 0.02 60);
+	background: radial-gradient(120% 80% at 30% 20%, oklch(0.94 0.02 80) 0%, oklch(0.86 0.03 75) 100%);
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.4) inset,
+		0 30px 60px -20px rgba(0, 0, 0, 0.6),
+		0 80px 120px -40px rgba(0, 0, 0, 0.5);
+}
+
+/* Procedural noise overlay — gives the paper its grain. */
+.welcome-paper::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	mix-blend-mode: multiply;
+	opacity: 0.55;
+	background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.28 0 0 0 0 0.18 0 0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+}
+
+/* Deckle edge along the bottom — irregular cut-paper look. */
+.welcome-paper::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -1px;
+	height: 14px;
+	pointer-events: none;
+	background: radial-gradient(8px 14px at 8px 0, transparent 7px, oklch(0.86 0.03 75) 7px) 0 0/16px 14px repeat-x;
+}
+
+/* Keep paper content above the noise/deckle. */
+.welcome-paper > * {
+	position: relative;
+}
+
+/* Slight rotation for analogue-feel — only on wide screens; on mobile it
+ * would push the rotated corners outside the viewport. */
+@media (min-width: 1024px) {
+	.welcome-paper {
+		transform: rotate(-0.4deg);
+	}
+}
+
+/* Eyebrow & accents inside the paper share a warm rust ink color. */
+.welcome-eyebrow {
+	color: oklch(0.45 0.13 28 / 0.85);
+}
+
+.welcome-title-accent {
+	color: oklch(0.45 0.13 28 / 0.85);
+}
+
+.welcome-enjoy {
+	color: oklch(0.45 0.13 28 / 0.85);
+}

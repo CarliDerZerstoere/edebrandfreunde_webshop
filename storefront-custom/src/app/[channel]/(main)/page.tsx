@@ -8,7 +8,7 @@ import {
 import { executePublicGraphQL } from "@/lib/graphql";
 import { brandConfig } from "@/config/brand";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
-import { parseEditorJSToHtml, parseEditorJSToText, parseEditorJSQualities } from "@/lib/editorjs";
+import { parseEditorJSToText, parseEditorJSQualities } from "@/lib/editorjs";
 
 // Dynamic components
 import { HeroEntrance } from "@/ui/components/hero-entrance";
@@ -18,7 +18,7 @@ import { TextReveal } from "@/ui/components/text-reveal";
 import { MarqueeBanner } from "@/ui/components/marquee-banner";
 import { ProductCarousel } from "@/ui/components/product-carousel";
 import { QualityCounter } from "@/ui/components/quality-counter";
-import { PixelStoryWidget } from "@/ui/components/pixel-story/pixel-story-widget";
+import { WelcomeLetterSection } from "@/ui/components/welcome-letter-section";
 
 const HERO_VIDEO_SOURCES = [
 	"/videos/hero-1.mp4",
@@ -41,8 +41,7 @@ export const metadata = {
  *   landing-sortiment    → Kategorien: Überschrift + Beschreibung
  *   landing-bestseller   → Bestseller: Überschrift + Beschreibung
  *   landing-qualitaet    → Qualität: Überschrift + Merkmale
- *   landing-destillation → Destillation: Überschrift + Text
- *   landing-about        → Über uns: Überschrift + Text
+ *   landing-about        → Willkommen-Brief: Anrede-Titel + Brieftext-Absätze
  *
  * Kategorien kommen aus Catalog → Categories
  * Produkte kommen aus Catalog → Collections → featured-products
@@ -80,6 +79,55 @@ async function getFeaturedProducts(channel: string) {
 	return result.data.collection?.products?.edges.map(({ node }) => node) ?? [];
 }
 
+/**
+ * Lädt die Jahrgangs-Liste für die Willkommen-Sektion.
+ * Saleor: Catalog → Collections → "landing-jahrgaenge"
+ *
+ * Pro Produkt im Dashboard zwei Metadata-Einträge setzen:
+ *   jahrgang = "2019"        (Jahreszahl, wird klein neben dem Namen angezeigt)
+ *   status   = "verfuegbar"  (Default — Anzeige: "Verfügbar")
+ *            = "letzte"      (Anzeige: "Letzte Flaschen")
+ *            = "vergriffen"  (Anzeige: "Vergriffen", grau dargestellt)
+ *
+ * Die Reihenfolge der Produkte in der Collection bestimmt die Reihenfolge
+ * in der Liste.
+ */
+async function getLandingVintages(channel: string) {
+	const result = await executePublicGraphQL(ProductListByCollectionDocument, {
+		variables: {
+			slug: "landing-jahrgaenge",
+			channel,
+			first: 20,
+			sortBy: { field: ProductOrderField.Collection, direction: OrderDirection.Asc },
+		},
+		revalidate: 300,
+	});
+	if (!result.ok) return [];
+	const products = result.data.collection?.products?.edges.map(({ node }) => node) ?? [];
+
+	const STATUS_LABELS: Record<string, { label: string; sold: boolean }> = {
+		verfuegbar: { label: "Verfügbar", sold: false },
+		letzte: { label: "Letzte Flaschen", sold: false },
+		vergriffen: { label: "Vergriffen", sold: true },
+	};
+
+	return products.map((p) => {
+		const meta = (p.metadata ?? []).reduce<Record<string, string>>((acc, m) => {
+			if (m?.key) acc[m.key.toLowerCase()] = m.value ?? "";
+			return acc;
+		}, {});
+		const statusKey = (meta.status || "verfuegbar").toLowerCase();
+		const status = STATUS_LABELS[statusKey] ?? STATUS_LABELS.verfuegbar;
+		return {
+			id: p.id,
+			name: p.name,
+			year: meta.jahrgang || "",
+			status: status.label,
+			sold: status.sold,
+		};
+	});
+}
+
 /* ============================================
  * Page
  * ============================================ */
@@ -88,16 +136,16 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 
 	// Batch all CMS + data fetches into one Promise.all to avoid serial
 	// roundtrips through the throttled GraphQL request queue (~200ms each).
-	const [heroPage, sortimentPage, bestsellPage, qualitaetPage, destillationPage, aboutPage, categories, products] =
+	const [heroPage, sortimentPage, bestsellPage, qualitaetPage, aboutPage, categories, products, vintages] =
 		await Promise.all([
 			getCmsPage("landing-hero"),
 			getCmsPage("landing-sortiment"),
 			getCmsPage("landing-bestseller"),
 			getCmsPage("landing-qualitaet"),
-			getCmsPage("landing-destillation"),
 			getCmsPage("landing-about"),
 			getCategories(),
 			getFeaturedProducts(channel),
+			getLandingVintages(channel),
 		]);
 
 	return (
@@ -107,8 +155,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 			<CategoriesSection page={sortimentPage} categories={categories} />
 			<FeaturedSection page={bestsellPage} products={products} />
 			<MarqueeBanner speed={50} />
-			<AboutSection page={aboutPage} />
-			<DestillationSection page={destillationPage} />
+			<WelcomeLetterSection page={aboutPage} vintages={vintages} />
 			<QualitySection page={qualitaetPage} />
 		</>
 	);
@@ -437,136 +484,9 @@ function QualitySection({ page }: { page: any }) {
 	);
 }
 
-/* ============================================
- * Destillation
- * Dashboard: Content → Pages → "landing-destillation"
- *   Titel = Überschrift (z.B. "Die Kunst der Destillation")
- *   Inhalt = Absätze mit Text über den Prozess
- *
- * Full-viewport or near-full-viewport cinematic editorial section.
- * ============================================ */
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function DestillationSection({ page }: { page: any }) {
-	if (!page) return null;
-
-	const contentHtml = parseEditorJSToHtml(page.content);
-
-	return (
-		<section
-			className="relative overflow-hidden bg-card"
-			style={{ paddingTop: "var(--section-py)", paddingBottom: "var(--section-py)" }}
-		>
-			{/* Ambient glow — copper warmth in the background */}
-			<div
-				className="ambient-glow-pulse pointer-events-none absolute left-1/2 top-1/2 -z-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-				aria-hidden="true"
-				style={{
-					background:
-						"radial-gradient(circle, oklch(0.515 0.082 155 / 0.22) 0%, transparent 70%)",
-				}}
-			/>
-
-			<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:gap-24 lg:items-center">
-					{/* Text column */}
-					<RevealOnScroll variant="fade-scale" slideDistance={36}>
-						<Eyebrow label="Handwerk" align="left" />
-						<TextReveal as="h2" className="mt-4 font-display text-section font-semibold tracking-tight">
-							{page.title}
-						</TextReveal>
-						{contentHtml && (
-							<div className="mt-8 space-y-5">
-								{contentHtml.map((html, i) => (
-									<RevealOnScroll
-										key={i}
-										variant="fade-blur"
-										delay={i * 100}
-										slideDistance={12}
-									>
-										<div
-											className="text-lg leading-relaxed text-muted-foreground"
-											dangerouslySetInnerHTML={{ __html: html }}
-										/>
-									</RevealOnScroll>
-								))}
-							</div>
-						)}
-					</RevealOnScroll>
-
-					{/* Illustration column — interactive pixel-art schnapps story */}
-					<RevealOnScroll delay={180} slideDistance={24}>
-						<div
-							className="relative flex aspect-[4/5] flex-col items-center justify-center gap-6 overflow-hidden rounded-lg p-6 sm:p-8 lg:aspect-auto lg:min-h-[520px]"
-							style={{
-								background:
-									"radial-gradient(ellipse at 50% 70%, oklch(0.515 0.082 155 / 0.35) 0%, oklch(0.198 0.034 155) 65%)",
-							}}
-						>
-							<PixelStoryWidget />
-						</div>
-					</RevealOnScroll>
-				</div>
-			</div>
-		</section>
-	);
-}
-
-/* ============================================
- * Über uns
- * Dashboard: Content → Pages → "landing-about"
- *   Titel = Überschrift (z.B. "Über die Edelbrandfreunde")
- *   Inhalt = Absätze mit der Geschichte
- *
- * Cinematic centered editorial layout with generous whitespace.
- * The decorative quote flourish gives it a magazine/editorial feel.
- * ============================================ */
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function AboutSection({ page }: { page: any }) {
-	if (!page) return null;
-
-	const contentHtml = parseEditorJSToHtml(page.content);
-
-	return (
-		<section className="flex min-h-[70vh] items-center">
-			<div
-				className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8"
-				style={{ paddingTop: "var(--section-py)", paddingBottom: "var(--section-py)" }}
-			>
-			<div className="mx-auto max-w-3xl text-center">
-				{/* Decorative quote flourish — CSS pseudo-element, no text content */}
-				<div className="quote-flourish" aria-hidden="true" />
-
-				<RevealOnScroll variant="fade-scale">
-					<Eyebrow label="Geschichte" />
-					<TextReveal as="h2" className="mt-4 font-display text-section font-semibold tracking-tight">
-						{page.title}
-					</TextReveal>
-				</RevealOnScroll>
-
-				{contentHtml && (
-					<div className="mt-10 space-y-5">
-						{contentHtml.map((html, i) => (
-							<RevealOnScroll
-								key={i}
-								variant="fade-blur"
-								delay={i * 120}
-								slideDistance={14}
-							>
-								<div
-									className="text-lg leading-relaxed text-muted-foreground sm:text-xl"
-									dangerouslySetInnerHTML={{ __html: html }}
-								/>
-							</RevealOnScroll>
-						))}
-					</div>
-				)}
-			</div>
-		</div>
-		</section>
-	);
-}
+/* The former DestillationSection (with the pixel-story widget) and
+ * AboutSection have been merged into <WelcomeLetterSection> — a single
+ * editorial "Brennmeister-Brief + Brennereibuch" layout. */
 
 /* ============================================
  * Shared
