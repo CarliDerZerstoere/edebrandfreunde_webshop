@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeRawGraphQL, getUserMessage } from "@/lib/graphql";
+import { consume, getClientIp, rateLimitHeaders } from "@/lib/rate-limit";
+
+// Tighter window than other auth endpoints — each call sends an email,
+// so this is also email-bomb prevention.
+const RATE_LIMIT = { name: "auth-reset-password", limit: 3, windowMs: 300_000 } as const;
 
 const REQUEST_PASSWORD_RESET_MUTATION = `
   mutation RequestPasswordReset($email: String!, $channel: String!, $redirectUrl: String!) {
@@ -40,6 +45,17 @@ function isAllowedRedirectUrl(url: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+	const ip = getClientIp(request);
+	const rl = consume(RATE_LIMIT, ip);
+	if (!rl.allowed) {
+		// Match the body shape used elsewhere; success responses already mask
+		// per-email enumeration, so a 429 simply tells the user to slow down.
+		return NextResponse.json(
+			{ errors: [{ message: "Zu viele Anfragen. Bitte versuche es in ein paar Minuten erneut.", code: "RATE_LIMITED" }] },
+			{ status: 429, headers: rateLimitHeaders(rl, RATE_LIMIT) },
+		);
+	}
+
 	const body = (await request.json()) as ResetPasswordRequest;
 	const { email, channel, redirectUrl } = body;
 

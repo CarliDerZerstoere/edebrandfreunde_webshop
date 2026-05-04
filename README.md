@@ -297,27 +297,80 @@ sudo systemctl restart saleor-storefront
 
 ## Sicherheit
 
-| Maßnahme | Status |
-|----------|--------|
-| SSH nur mit Key, kein Root-Login | Aktiv |
-| UFW Firewall (nur 22, 80, 443) | Aktiv |
-| Fail2Ban | Aktiv |
-| HSTS + CSP + Security Headers | Via Caddy |
-| Docker no-new-privileges | Alle Container |
-| Resource Limits (RAM, CPU, PIDs) | Alle Container |
-| Secrets nicht in Git | .gitignore |
-| Postfix Relay-Restrictions | Konfiguriert |
-| DKIM + SPF + DMARC | DNS-Records nötig |
-| Checkout Cookie httpOnly | Aktiv |
+| Maßnahme | Status | Hinweise |
+|----------|--------|----------|
+| SSH nur mit Key, kein Root-Login | ✅ Aktiv | `MaxAuthTries 3`, `KbdInteractiveAuthentication no` |
+| Fail2Ban (`[sshd]` Jail) | ✅ Aktiv | 3 Versuche → 1h Ban, nftables-Backend |
+| UFW Firewall | ✅ Aktiv | Nur 22, 80, 443 ein; Port 3000 nur ab Docker-Bridges |
+| HSTS + CSP + Security Headers | ✅ Aktiv | Caddyfile (Storefront + API + Admin) |
+| Caddy Basic Auth (Admin Dashboard) | ✅ Aktiv | User `brennmeister` (default `admin` rotiert), Passwort in `.admin-credentials` |
+| Docker `no-new-privileges` | ✅ Alle Container | + `cap_drop: ALL` für Postfix |
+| Resource Limits (RAM, CPU, PIDs) | ✅ Alle Container | |
+| Postfix-Image gepinnt | ✅ `boky/postfix:5.1.0` | Updates bewusst per `docker compose pull` |
+| Secrets nicht in Git | ✅ `.gitignore` | `.env`, `.env.api`, `*.pem`, `.admin-credentials`, DKIM-Keys |
+| Postfix Relay-Restrictions | ✅ Konfiguriert | `permit_mynetworks,reject_unauth_destination` + Rate-Limits |
+| DKIM + SPF + DMARC | ⚠️ Schlüssel da, DNS-Records fehlen | Hetzner Cloud: A-Record `mail.` + Reverse-DNS, dann SPF/DKIM/DMARC TXT |
+| Checkout Cookie `httpOnly` | ✅ Aktiv | `secure: true`, `sameSite: lax` |
+| GraphQL Playground UI deaktiviert | ✅ `PLAYGROUND_ENABLED=False` | GET `/graphql/` → 405 |
+| **App-Level Rate-Limits** | ✅ Aktiv | `/api/auth/register` 5/60s, `/api/auth/reset-password` 3/5min, `/api/auth/set-password` 5/60s — siehe `src/lib/rate-limit.ts` |
+| **Tägliche Backups** | ✅ Aktiv (Cron 03:30) | DB + Media in `~/backups/`, 7 Tage Retention — siehe `backup.sh` |
+
+### Rate-Limits
+Config in `storefront-custom/src/lib/rate-limit.ts`. Sliding-Window per IP:
+
+| Endpoint | Limit | Fenster | Begründung |
+|----------|------:|--------:|-----------|
+| `/api/auth/register` | 5 | 60 s | Anti-Spam, Anti-DoS |
+| `/api/auth/reset-password` | 3 | 5 min | Email-Bomb-Prevention (jeder Call schickt eine E-Mail) |
+| `/api/auth/set-password` | 5 | 60 s | Brute-Force der Reset-Token verhindern |
+
+Bei Limit-Trigger: HTTP 429 mit `Retry-After`-Header. IP wird aus `X-Forwarded-For` (Caddy) extrahiert.
+
+### Backups
+Daily 03:30 via Cron, retention 7 Tage:
+- DB: `~/backups/db/saleor-{ISO}.dump` (PostgreSQL custom format, gzip-9)
+- Media: `~/backups/media/media-{ISO}.tgz`
+- Log: `~/backups/backup.log`
+
+Restore (siehe Header von `backup.sh`):
+```bash
+docker exec -i saleor-production-db-1 pg_restore -U saleor -d saleor --clean --if-exists < backup.dump
+tar xzf media.tgz -C /var/lib/docker/volumes/saleor-production_saleor-media/_data/
+```
+
+⚠️ Off-site-Backup (Hetzner Storage Box / S3) noch nicht eingerichtet — bei Server-Loss sind die Backups weg.
+
+### UFW Setup-Skript
+Das aktive UFW-Regelwerk liegt als reproducible Skript im Repo unter `setup-ufw.sh`.
+Bei Server-Wechsel oder Re-Install:
+
+```bash
+sudo bash /home/webshopadmin/saleor-production/setup-ufw.sh
+```
+
+Das Skript ist idempotent (zwei Mal ausführen schadet nicht) und lässt SSH **vor** dem Enable explizit zu — kein Lockout-Risiko.
 
 ---
 
-## Noch offen (Blocker für Go-Live)
+## Noch offen
 
-| # | Was | Status |
-|---|-----|--------|
-| 1 | **Zahlungsanbieter (Stripe)** | Fehlt — ohne das kann niemand bezahlen |
-| 2 | **E-Mail (Port 25 oder Relay)** | Postfix steht, Port 25 gesperrt, Relay nötig |
-| 3 | **Altersverifikation-Checkbox** im Checkout | Geplant |
-| 4 | **Impressum ausfüllen** — [BITTE AUSFÜLLEN] Platzhalter ersetzen | Dashboard |
-| 5 | **Dashboard Passwort ändern** | Temporäres Passwort aktiv |
+### 🔴 Go-Live Blocker
+
+| # | Was | Wo zu tun? |
+|---|-----|------------|
+| 1 | **Zahlungsanbieter (Stripe)** Integration | Saleor Dashboard → Configuration → Plugins, dann Storefront Checkout |
+| 2 | **Mail-Versand operational machen** — Port 25 gesperrt, brauchen Relay | Hetzner Support-Ticket für Port-25-Unblock ODER Brevo/Mailgun als Smart-Host |
+| 3 | **DNS-Records für Mail**: A-Record `mail.edelbrandfreunde.at`, Reverse-DNS (PTR), SPF, DKIM, DMARC | Hetzner Cloud Console + Domain-Provider |
+| 4 | **Altersverifikation 18+ Checkbox** im Checkout (NÖ JG §18) | `storefront-custom/src/checkout/` |
+| 5 | **Impressum / Datenschutz / Widerruf ausfüllen** — `[BITTE AUSFÜLLEN]` Platzhalter ersetzen | Saleor Dashboard → Content → Pages |
+| 6 | **Saleor-Admin-Passwort rotieren** (`TempAdmin2026!` ist temporär) | Dashboard → Account-Icon → Account |
+
+### 🟡 Security — Defense in Depth
+
+| # | Was | Hinweise |
+|---|-----|----------|
+| 7 | **GraphQL Introspection per POST blockieren** (Phase B) | Aktuell deaktiviert nur die Playground-UI. POST `__schema` Queries gehen noch durch. Bräuchte Saleor-Source-Patch oder Custom-Image. |
+| 8 | **Off-site-Backups** | Hetzner Storage Box (~3,80 €/Monat 1 TB) per `rclone`/`rsync` täglich — aktuell liegen Backups nur lokal |
+| 9 | **Restore-Drill** | Mind. einmal Backup in Test-DB einspielen — sonst weiß man nicht, ob er funktioniert |
+| 10 | **Admin-IP-Whitelist** (optional) | Caddy `@allowed_ips` für `admin.` falls du nur von Heim-IP zugreifst |
+| 11 | **Rate-Limits per Redis-Backend** | Aktuell In-Memory, OK für Single-Process. Bei Horizontal-Scaling Pflicht. |

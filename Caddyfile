@@ -55,7 +55,7 @@ api.edelbrandfreunde.at {
 admin.edelbrandfreunde.at {
 	# Basic Auth aktiv. Klartext-Credentials liegen in /home/webshopadmin/saleor-production/.admin-credentials (chmod 600).
 	basicauth {
-		admin $2a$14$8R5Y2QQF.NRh7FAeodfcgu69E/ZgBNp9wCuAklyiA./SoGmOyknXO
+		brennmeister $2a$14$8R5Y2QQF.NRh7FAeodfcgu69E/ZgBNp9wCuAklyiA./SoGmOyknXO
 	}
 	reverse_proxy dashboard:80
 	header {

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { executeRawGraphQL, asValidationError, getUserMessage } from "@/lib/graphql";
 import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE, encodeCookieName } from "@/lib/auth/constants";
+import { consume, getClientIp, rateLimitHeaders } from "@/lib/rate-limit";
+
+const RATE_LIMIT = { name: "auth-set-password", limit: 5, windowMs: 60_000 } as const;
 
 const SET_PASSWORD_MUTATION = `
   mutation SetPassword($email: String!, $token: String!, $password: String!) {
@@ -32,6 +35,15 @@ interface SetPasswordResult {
 }
 
 export async function POST(request: NextRequest) {
+	const ip = getClientIp(request);
+	const rl = consume(RATE_LIMIT, ip);
+	if (!rl.allowed) {
+		return NextResponse.json(
+			{ errors: [{ message: "Zu viele Versuche. Bitte warte einen Moment.", code: "RATE_LIMITED" }] },
+			{ status: 429, headers: rateLimitHeaders(rl, RATE_LIMIT) },
+		);
+	}
+
 	const body = (await request.json()) as SetPasswordRequest;
 	const { email, token, password } = body;
 

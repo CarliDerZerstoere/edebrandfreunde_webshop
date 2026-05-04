@@ -135,8 +135,52 @@ cp -r .next/static .next/standalone/.next/static
 
 ### Caddy Basic Auth fürs Admin-Dashboard
 - `admin.edelbrandfreunde.at` ist via `basicauth` zusätzlich geschützt (Caddyfile aktiviert).
+- Username **`brennmeister`** (rotiert vom Default `admin` am 2026-05-04).
 - Klartext-Credentials in `/home/webshopadmin/saleor-production/.admin-credentials` (chmod 600, in .gitignore).
 - Hash neu generieren: `docker exec saleor-production-caddy-1 caddy hash-password`.
+- Nach Caddyfile-Änderung neu laden: `docker compose restart caddy` (`caddy reload` via Admin-API hat lokal Issues).
+
+### App-Level Rate-Limits (`src/lib/rate-limit.ts`)
+- In-Memory Sliding-Window Limiter für `/api/auth/*` Endpoints.
+- Aktive Limits:
+  - `/api/auth/register` — 5 Requests / 60 s / IP
+  - `/api/auth/reset-password` — 3 Requests / 5 min / IP (auch Email-Bomb-Prevention)
+  - `/api/auth/set-password` — 5 Requests / 60 s / IP
+- Bei Limit-Trigger: HTTP 429 mit `Retry-After`, `X-RateLimit-*` Headers.
+- IP wird aus `X-Forwarded-For` (Caddy) extrahiert — funktioniert NUR weil UFW direkten Zugriff auf Port 3000 blockt.
+- In-Memory ist OK solange nur ein Next.js-Prozess läuft. Bei Horizontal-Scaling: Redis-Backend tauschen, API bleibt gleich (`consume`, `getClientIp`, `rateLimitHeaders`).
+- Memory-Schutz: `MAX_KEYS=10_000`, Lazy Sweep alle 30 s, Fail-Open bei Cap-Hit (lieber Legit-User durchlassen als OOM).
+
+### UFW Firewall
+- Aktiv seit 2026-05-04. Eingehend: nur 22 (SSH), 80 (HTTP), 443 (HTTPS+QUIC).
+- Port 3000 (Next.js Storefront) **nur von Docker-Bridges** erreichbar (172.17.0.0/16, 172.18.0.0/16, 172.20.0.0/24).
+- Setup-Skript im Repo: `/home/webshopadmin/saleor-production/setup-ufw.sh` (idempotent, SSH wird VOR Enable freigegeben — kein Lockout-Risiko).
+- Bei Server-Wechsel/Reinstall: `sudo bash setup-ufw.sh`.
+- Status: `sudo ufw status verbose`. Regel ändern via `sudo ufw <command>`.
+- ⚠️ Docker veröffentlicht Container-Ports via FORWARD-Chain und umgeht UFW — daher sind die Caddy-Ports (80/443) nicht via UFW kontrolliert sondern via Docker selbst. Der Schutz greift für **host-Prozesse** wie den Next.js Storefront auf 3000.
+
+### SSH-Hardening (bereits aktiv)
+- `PasswordAuthentication no` — nur Key-Login.
+- `PermitRootLogin no` — Root kann sich nicht einloggen.
+- `MaxAuthTries 3`, `KbdInteractiveAuthentication no`, `X11Forwarding no`.
+- **fail2ban** aktiv mit `[sshd]` Jail: 3 Versuche → 1h Ban (Window 10 min, nftables-Backend).
+
+### Backups
+- Tägliches Backup um 03:30 via Cron: `/home/webshopadmin/saleor-production/backup.sh`.
+- Pfade: `~/backups/db/saleor-{ISO}.dump` (PostgreSQL custom format, gzip-9), `~/backups/media/media-{ISO}.tgz`.
+- Retention: 7 Tage (automatisch).
+- Log: `~/backups/backup.log`.
+- ⚠️ Backups liegen lokal — bei Server-Loss weg. TODO: Off-site-Sync (Hetzner Storage Box).
+- Restore-Befehle stehen im Header von `backup.sh`.
+
+### GraphQL-Introspection
+- `PLAYGROUND_ENABLED=False` in `.env.api` → GET `/graphql/` → 405 (kein UI mehr).
+- ⚠️ Programmatische POST-Introspection ist noch möglich. Vollblockade braucht Saleor-Patch (Phase B, offen).
+
+### Postfix-Image gepinnt
+- `boky/postfix:5.1.0` (kein `:latest` mehr) — Updates passieren bewusst.
+- Caps: `+CHOWN +FOWNER` zusätzlich zu den Standard-Caps nötig (sonst crasht OpenDKIM-Init bei Recreate).
+- Update-Workflow: 1) Tag bumpen in `docker-compose.yml`, 2) `docker compose pull postfix`, 3) `docker compose up -d postfix`.
 
 ### Webhook-Secrets
 - `REVALIDATE_SECRET` und `SALEOR_WEBHOOK_SECRET` sind in `storefront/.env`.

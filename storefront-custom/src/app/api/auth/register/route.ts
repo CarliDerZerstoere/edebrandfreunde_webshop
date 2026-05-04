@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeRawGraphQL, asValidationError, getUserMessage } from "@/lib/graphql";
+import { consume, getClientIp, rateLimitHeaders } from "@/lib/rate-limit";
+
+const RATE_LIMIT = { name: "auth-register", limit: 5, windowMs: 60_000 } as const;
 
 const REGISTER_MUTATION = `
   mutation AccountRegister($input: AccountRegisterInput!) {
@@ -48,6 +51,15 @@ function isAllowedRedirectUrl(url: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+	const ip = getClientIp(request);
+	const rl = consume(RATE_LIMIT, ip);
+	if (!rl.allowed) {
+		return NextResponse.json(
+			{ errors: [{ message: "Zu viele Registrierungsversuche. Bitte warte einen Moment.", code: "RATE_LIMITED" }] },
+			{ status: 429, headers: rateLimitHeaders(rl, RATE_LIMIT) },
+		);
+	}
+
 	const body = (await request.json()) as RegisterRequest;
 	const { email, password, firstName, lastName, channel, redirectUrl } = body;
 
