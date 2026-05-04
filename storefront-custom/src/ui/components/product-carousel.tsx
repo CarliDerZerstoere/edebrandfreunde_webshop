@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import useEmblaCarousel from "embla-carousel-react";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
 import { ProductImageWrapper } from "@/ui/atoms/product-image-wrapper";
 import { type ProductListItemFragment } from "@/gql/graphql";
@@ -12,61 +13,60 @@ interface ProductCarouselProps {
 }
 
 /**
- * A horizontally scrollable product carousel with:
- * - CSS scroll-snap for crisp item alignment
- * - Left / right navigation arrows on desktop (keyboard accessible)
- * - Native touch/swipe support via overflow-x: scroll
- * - Hover image zoom + overlay details
- * - Respects `prefers-reduced-motion` for scroll behaviour
+ * Horizontal product carousel powered by Embla Carousel.
+ *
+ * Why Embla instead of CSS scroll-snap: iOS Safari has known issues
+ * with `scroll-snap-type` inside ancestors that use `overflow: clip`,
+ * which left some cards unreachable on mobile. Embla handles touch
+ * gestures purely in JS and works reliably across all mobile browsers.
  */
 export function ProductCarousel({ products }: ProductCarouselProps) {
-	const scrollRef = useRef<HTMLUListElement>(null);
-	const [canScrollLeft, setCanScrollLeft] = useState(false);
-	const [canScrollRight, setCanScrollRight] = useState(true);
 	const prefersReduced = useReducedMotion();
+	const [emblaRef, emblaApi] = useEmblaCarousel({
+		align: "start",
+		containScroll: "trimSnaps",
+		dragFree: false,
+		duration: prefersReduced ? 0 : 25,
+		watchDrag: true,
+	});
 
-	const updateScrollState = useCallback(() => {
-		const el = scrollRef.current;
-		if (!el) return;
-		setCanScrollLeft(el.scrollLeft > 4);
-		setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-	}, []);
+	const [canScrollPrev, setCanScrollPrev] = useState(false);
+	const [canScrollNext, setCanScrollNext] = useState(false);
+	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+
+	const onSelect = useCallback(() => {
+		if (!emblaApi) return;
+		setSelectedIndex(emblaApi.selectedScrollSnap());
+		setCanScrollPrev(emblaApi.canScrollPrev());
+		setCanScrollNext(emblaApi.canScrollNext());
+	}, [emblaApi]);
 
 	useEffect(() => {
-		const el = scrollRef.current;
-		if (!el) return;
-		updateScrollState();
-		el.addEventListener("scroll", updateScrollState, { passive: true });
-		const ro = new ResizeObserver(updateScrollState);
-		ro.observe(el);
+		if (!emblaApi) return;
+		setScrollSnaps(emblaApi.scrollSnapList());
+		onSelect();
+		emblaApi.on("select", onSelect);
+		emblaApi.on("reInit", onSelect);
 		return () => {
-			el.removeEventListener("scroll", updateScrollState);
-			ro.disconnect();
+			emblaApi.off("select", onSelect);
+			emblaApi.off("reInit", onSelect);
 		};
-	}, [updateScrollState]);
+	}, [emblaApi, onSelect]);
 
-	const scrollBy = useCallback(
-		(direction: "left" | "right") => {
-			const el = scrollRef.current;
-			if (!el) return;
-			// Scroll by ~80% of visible width so the user keeps context
-			const amount = el.clientWidth * 0.82;
-			el.scrollBy({
-				left: direction === "left" ? -amount : amount,
-				behavior: prefersReduced ? "auto" : "smooth",
-			});
-		},
-		[prefersReduced],
-	);
+	const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+	const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+	const scrollTo = useCallback((i: number) => emblaApi?.scrollTo(i), [emblaApi]);
 
 	if (products.length === 0) return null;
 
 	return (
 		<div className="group/carousel relative">
-			{/* ---- Left arrow ---- */}
+			{/* ---- Left arrow (desktop only) ---- */}
 			<button
-				onClick={() => scrollBy("left")}
-				disabled={!canScrollLeft}
+				type="button"
+				onClick={scrollPrev}
+				disabled={!canScrollPrev}
 				aria-label="Vorherige Produkte"
 				className={[
 					"absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-1/2",
@@ -77,41 +77,27 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 					"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 					"disabled:pointer-events-none disabled:opacity-0",
 					"lg:flex",
-					// Reveal on hover of the whole carousel block
 					"opacity-0 group-hover/carousel:opacity-100",
-					canScrollLeft ? "" : "!opacity-0",
+					canScrollPrev ? "" : "!opacity-0",
 				].join(" ")}
 			>
 				<ChevronLeft />
 			</button>
 
-			{/* ---- Scroll track ---- */}
-			<ul
-				ref={scrollRef}
-				role="list"
-				data-testid="ProductCarousel"
-				className={[
-					"flex gap-4 overflow-x-auto pb-4 sm:gap-5",
-					// Scroll snap (proximity, not mandatory — otherwise the last
-					// cards can be unreachable on mobile when their snap-start
-					// position lies past max scrollLeft and the browser snaps back)
-					"snap-x snap-proximity",
-					// Hide scrollbar on webkit, keep functionality
-					"scrollbar-hide",
-					// Padding so first/last cards aren't clipped by the arrows
-					"px-1",
-				].join(" ")}
-				style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-			>
-				{products.map((product, index) => (
-					<CarouselCard key={product.id} product={product} index={index} />
-				))}
-			</ul>
+			{/* ---- Embla viewport ---- */}
+			<div ref={emblaRef} className="overflow-hidden">
+				<ul role="list" data-testid="ProductCarousel" className="flex gap-4 sm:gap-5">
+					{products.map((product, index) => (
+						<CarouselCard key={product.id} product={product} index={index} />
+					))}
+				</ul>
+			</div>
 
-			{/* ---- Right arrow ---- */}
+			{/* ---- Right arrow (desktop only) ---- */}
 			<button
-				onClick={() => scrollBy("right")}
-				disabled={!canScrollRight}
+				type="button"
+				onClick={scrollNext}
+				disabled={!canScrollNext}
 				aria-label="Nächste Produkte"
 				className={[
 					"absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2",
@@ -123,14 +109,30 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 					"disabled:pointer-events-none disabled:opacity-0",
 					"lg:flex",
 					"opacity-0 group-hover/carousel:opacity-100",
-					canScrollRight ? "" : "!opacity-0",
+					canScrollNext ? "" : "!opacity-0",
 				].join(" ")}
 			>
 				<ChevronRight />
 			</button>
 
-			{/* ---- Scroll-position dots (mobile) ---- */}
-			<ScrollDots products={products} scrollRef={scrollRef} />
+			{/* ---- Dots (mobile) ---- */}
+			{scrollSnaps.length > 1 && (
+				<div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden" aria-hidden="true">
+					{scrollSnaps.map((_, i) => (
+						<button
+							key={i}
+							type="button"
+							onClick={() => scrollTo(i)}
+							className={[
+								"rounded-full transition-all duration-300",
+								i === selectedIndex
+									? "h-1.5 w-5 bg-accent"
+									: "h-1.5 w-1.5 bg-border hover:bg-muted-foreground",
+							].join(" ")}
+						/>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }
@@ -151,17 +153,9 @@ function CarouselCard({
 	});
 
 	return (
-		<li
-			className={[
-				// Snap alignment
-				"snap-start",
-				// Card dimensions: ~80vw on mobile, fixed on desktop
-				"w-[72vw] flex-shrink-0 sm:w-64 lg:w-72",
-			].join(" ")}
-		>
+		<li className="min-w-0 flex-[0_0_72%] sm:flex-[0_0_16rem] lg:flex-[0_0_18rem]">
 			<LinkWithChannel href={`/products/${product.slug}`} prefetch={false}>
 				<div className="group relative flex flex-col">
-					{/* Image wrapper with hover effects */}
 					<div className="relative overflow-hidden rounded-lg">
 						{product.thumbnail?.url ? (
 							<>
@@ -175,7 +169,6 @@ function CarouselCard({
 									priority={index < 2}
 									className="transition-transform duration-700 group-hover:scale-105"
 								/>
-								{/* Hover overlay */}
 								<div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
 									<div className="w-full p-4">
 										<span className="inline-block rounded border border-accent-foreground/40 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-accent-foreground">
@@ -190,7 +183,6 @@ function CarouselCard({
 							</div>
 						)}
 
-						{/* Category badge */}
 						{product.category?.name && (
 							<div className="absolute left-3 top-3">
 								<span className="inline-block rounded bg-primary/80 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-primary-foreground backdrop-blur-sm">
@@ -200,10 +192,9 @@ function CarouselCard({
 						)}
 					</div>
 
-					{/* Text */}
 					<div className="mt-3 flex items-start justify-between gap-2">
 						<div className="min-w-0">
-							<h3 className="truncate text-sm font-semibold text-foreground group-hover:text-accent transition-colors duration-200">
+							<h3 className="truncate text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-accent">
 								{product.name}
 							</h3>
 							{product.category?.name && (
@@ -215,56 +206,6 @@ function CarouselCard({
 				</div>
 			</LinkWithChannel>
 		</li>
-	);
-}
-
-/* ============================================================
- * Scroll-position dot indicators (mobile visual aid)
- * ============================================================ */
-function ScrollDots({
-	products,
-	scrollRef,
-}: {
-	products: readonly ProductListItemFragment[];
-	scrollRef: React.RefObject<HTMLUListElement | null>;
-}) {
-	const [activeIndex, setActiveIndex] = useState(0);
-	// Show only up to 8 dots to avoid clutter
-	const dotCount = Math.min(products.length, 8);
-
-	useEffect(() => {
-		const el = scrollRef.current;
-		if (!el) return;
-		const handler = () => {
-			const progress = el.scrollLeft / (el.scrollWidth - el.clientWidth);
-			setActiveIndex(Math.round(progress * (dotCount - 1)));
-		};
-		el.addEventListener("scroll", handler, { passive: true });
-		return () => el.removeEventListener("scroll", handler);
-	}, [scrollRef, dotCount]);
-
-	if (dotCount < 2) return null;
-
-	return (
-		<div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden" aria-hidden="true">
-			{Array.from({ length: dotCount }).map((_, i) => (
-				<button
-					key={i}
-					onClick={() => {
-						const el = scrollRef.current;
-						if (!el) return;
-						const target = (i / (dotCount - 1)) * (el.scrollWidth - el.clientWidth);
-						el.scrollTo({ left: target, behavior: "smooth" });
-					}}
-					className={[
-						"rounded-full transition-all duration-300",
-						i === activeIndex
-							? "h-1.5 w-5 bg-accent"
-							: "h-1.5 w-1.5 bg-border hover:bg-muted-foreground",
-					].join(" ")}
-				/>
-			))}
-		</div>
 	);
 }
 
