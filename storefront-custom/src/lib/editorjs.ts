@@ -64,16 +64,56 @@ export function parseEditorJSToHtml(content: string | null | undefined): string[
 	}
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+	nbsp: " ",
+	amp: "&",
+	lt: "<",
+	gt: ">",
+	quot: '"',
+	apos: "'",
+	ndash: "–",
+	mdash: "—",
+	hellip: "…",
+	laquo: "«",
+	raquo: "»",
+	bdquo: "„",
+	ldquo: "“",
+	rdquo: "”",
+	sbquo: "‚",
+	lsquo: "‘",
+	rsquo: "’",
+};
+
 /**
- * Safely strip HTML tags from a string.
+ * Decode common HTML entities (named + numeric) in plain text. xss strips tags
+ * but leaves entities intact, so EditorJS content with `&nbsp;` shows literally
+ * unless we decode them here.
+ */
+function decodeHtmlEntities(s: string): string {
+	return s.replace(/&(#?[a-zA-Z0-9]+);/g, (match, name: string) => {
+		if (name.startsWith("#x") || name.startsWith("#X")) {
+			const cp = parseInt(name.slice(2), 16);
+			return Number.isFinite(cp) ? String.fromCodePoint(cp) : match;
+		}
+		if (name.startsWith("#")) {
+			const cp = parseInt(name.slice(1), 10);
+			return Number.isFinite(cp) ? String.fromCodePoint(cp) : match;
+		}
+		return NAMED_ENTITIES[name] ?? match;
+	});
+}
+
+/**
+ * Safely strip HTML tags from a string and decode common HTML entities.
  * Uses xss library configured to strip all tags.
  */
 function stripHtmlTags(html: string): string {
-	return xss(html, {
+	const stripped = xss(html, {
 		whiteList: {}, // Allow no tags
 		stripIgnoreTag: true, // Strip all tags not in whitelist
 		stripIgnoreTagBody: ["script", "style"], // Remove script/style content entirely
 	});
+	return decodeHtmlEntities(stripped);
 }
 
 /**

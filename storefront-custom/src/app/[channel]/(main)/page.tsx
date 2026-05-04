@@ -41,7 +41,9 @@ export const metadata = {
  *   landing-sortiment    → Kategorien: Überschrift + Beschreibung
  *   landing-bestseller   → Bestseller: Überschrift + Beschreibung
  *   landing-qualitaet    → Qualität: Überschrift + Merkmale
- *   landing-about        → Willkommen-Brief: Anrede-Titel + Brieftext-Absätze
+ *   landing-destillation → Willkommen-Brief: Titel + Absätze + Signatur + Tagline
+ *                          (letzte 2 Absätze = Signatur & "Enjoy"-Tagline,
+ *                           Rest = Brieftext, // = Kommentar wird ignoriert)
  *
  * Kategorien kommen aus Catalog → Categories
  * Produkte kommen aus Catalog → Collections → featured-products
@@ -83,11 +85,12 @@ async function getFeaturedProducts(channel: string) {
  * Lädt die Jahrgangs-Liste für die Willkommen-Sektion.
  * Saleor: Catalog → Collections → "landing-jahrgaenge"
  *
- * Pro Produkt im Dashboard zwei Metadata-Einträge setzen:
- *   jahrgang = "2019"        (Jahreszahl, wird klein neben dem Namen angezeigt)
- *   status   = "verfuegbar"  (Default — Anzeige: "Verfügbar")
- *            = "letzte"      (Anzeige: "Letzte Flaschen")
- *            = "vergriffen"  (Anzeige: "Vergriffen", grau dargestellt)
+ * Pro Produkt im Dashboard folgende Metadata-Einträge setzen:
+ *   jahrgang   = "2019"        (Jahreszahl, wird klein neben dem Namen angezeigt)
+ *   status     = "verfuegbar"  (Default — Anzeige: "Verfügbar")
+ *              = "letzte"      (Anzeige: "Letzte Flaschen")
+ *              = "vergriffen"  (Anzeige: "Vergriffen", grau dargestellt)
+ *   name_kurz  = "Marille"     (optional — Kurzform für die Liste; sonst Produktname)
  *
  * Die Reihenfolge der Produkte in der Collection bestimmt die Reihenfolge
  * in der Liste.
@@ -120,7 +123,7 @@ async function getLandingVintages(channel: string) {
 		const status = STATUS_LABELS[statusKey] ?? STATUS_LABELS.verfuegbar;
 		return {
 			id: p.id,
-			name: p.name,
+			name: meta.name_kurz || p.name,
 			year: meta.jahrgang || "",
 			status: status.label,
 			sold: status.sold,
@@ -142,7 +145,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 			getCmsPage("landing-sortiment"),
 			getCmsPage("landing-bestseller"),
 			getCmsPage("landing-qualitaet"),
-			getCmsPage("landing-about"),
+			getCmsPage("landing-destillation"),
 			getCategories(),
 			getFeaturedProducts(channel),
 			getLandingVintages(channel),

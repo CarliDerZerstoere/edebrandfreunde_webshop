@@ -10,10 +10,11 @@ import { parseEditorJSToText } from "@/lib/editorjs";
  * Rechte Säule: Brennereibuch-Sidebar mit Prozess (I–V),
  * Verfahren/Auflage und aktuellen Jahrgängen.
  *
- * Die Jahrgangs-Liste ist hier hardcoded. Falls sie später
- * dynamisch aus Saleor kommen soll: ein Produkt-Attribut
- * "jahrgang" einführen und die Liste durch eine GraphQL-Query
- * mit Verfügbarkeits-Status ersetzen.
+ * Die Jahrgangs-Liste kommt aus der Saleor-Collection
+ * "landing-jahrgaenge" (siehe getLandingVintages in page.tsx).
+ * Wenn die Collection leer / nicht vorhanden ist, wird die
+ * "Aktuelle Jahrgänge"-Box komplett ausgeblendet — keine
+ * Platzhalter-Inhalte mehr.
  * ============================================================ */
 
 const PROCESS_STEPS = [
@@ -22,19 +23,6 @@ const PROCESS_STEPS = [
 	{ n: "III", title: "Brand", note: "Sehr langsam, im Edelstahlkessel", duration: "Tage" },
 	{ n: "IV", title: "Reife", note: "Zur Beruhigung, in Ruhe gelagert", duration: "Jahre" },
 	{ n: "V", title: "Trinkstärke", note: "Mit französischem Mineralwasser", duration: "Letzter Schritt" },
-] as const;
-
-/**
- * Fallback-Liste, falls die Saleor-Collection "landing-jahrgaenge" leer
- * oder noch nicht angelegt ist. Sobald im Dashboard Produkte mit dem
- * Metadata-Key `jahrgang` (und optional `status`) hinzugefügt werden,
- * werden diese Einträge ignoriert.
- */
-const VINTAGES_FALLBACK = [
-	{ name: "Marille", year: "2019", status: "Verfügbar", sold: false },
-	{ name: "Williams Birne", year: "2020", status: "Verfügbar", sold: false },
-	{ name: "Quitte", year: "2018", status: "Letzte Flaschen", sold: false },
-	{ name: "Vogelbeere", year: "2017", status: "Vergriffen", sold: true },
 ] as const;
 
 export interface Vintage {
@@ -46,7 +34,7 @@ export interface Vintage {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function WelcomeLetterSection({ page, vintages }: { page: any; vintages?: Vintage[] }) {
-	const vintageList: ReadonlyArray<Vintage> = vintages && vintages.length > 0 ? vintages : VINTAGES_FALLBACK;
+	const vintageList: ReadonlyArray<Vintage> = vintages ?? [];
 	const titleRaw: string = page?.title ?? "Willkommen, liebe Freunde.";
 	// Split title at the first comma so the second half can render as italic accent.
 	const commaIndex = titleRaw.indexOf(",");
@@ -54,7 +42,14 @@ export function WelcomeLetterSection({ page, vintages }: { page: any; vintages?:
 	const titleTail = commaIndex > -1 ? titleRaw.slice(commaIndex + 1).trim() : "";
 
 	const bodyText = (page ? parseEditorJSToText(page.content) : "") ?? "";
-	const paragraphs = bodyText.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+	const allParagraphs = bodyText.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+
+	// CMS-Konvention: vorletzter Absatz = Signatur (script font, links unten),
+	// letzter Absatz = Tagline (uppercase, rechts unten),
+	// alle vorhergehenden Absätze = Brieftext.
+	const tagline = allParagraphs.length >= 2 ? allParagraphs.at(-1) ?? "" : "";
+	const signature = allParagraphs.length >= 2 ? allParagraphs.at(-2) ?? "" : "";
+	const paragraphs = allParagraphs.length >= 2 ? allParagraphs.slice(0, -2) : allParagraphs;
 
 	return (
 		<section
@@ -103,18 +98,22 @@ export function WelcomeLetterSection({ page, vintages }: { page: any; vintages?:
 						</div>
 					)}
 
-					<div className="mt-8 flex flex-wrap items-end justify-between gap-6">
-						<div>
-							<div className="font-script text-[42px] leading-[0.9] text-[oklch(0.22_0.04_60)]">Euer Alf. Riedl</div>
-							<div className="mt-2 text-[11px] uppercase tracking-[0.28em] text-[oklch(0.4_0.02_60)]">
-								Brennmeister · Abfindungsbrennerei
-							</div>
+					{(signature || tagline) && (
+						<div className="mt-8 flex flex-wrap items-end justify-between gap-6">
+							{signature && (
+								<div>
+									<div className="font-script text-[42px] leading-[0.9] text-[oklch(0.22_0.04_60)]">
+										{signature}
+									</div>
+								</div>
+							)}
+							{tagline && (
+								<div className="text-right">
+									<div className="welcome-enjoy text-[11px] uppercase tracking-[0.28em]">{tagline}</div>
+								</div>
+							)}
 						</div>
-						<div className="text-right">
-							<div className="welcome-enjoy text-[11px] uppercase tracking-[0.28em]">Enjoy.</div>
-							<div className="mt-1 text-[11px] uppercase tracking-[0.28em] text-[oklch(0.4_0.02_60)]">For Friends Only</div>
-						</div>
-					</div>
+					)}
 				</article>
 
 				{/* ===== RIGHT: Brennereibuch sidebar ===== */}
@@ -167,31 +166,33 @@ export function WelcomeLetterSection({ page, vintages }: { page: any; vintages?:
 						</div>
 					</dl>
 
-					{/* Aktuelle Jahrgänge */}
-					<div className="border-t border-[color:var(--ink-rule)] pt-6">
-						<div className="mb-5 flex items-baseline justify-between text-[10.5px] font-medium uppercase tracking-[0.32em] text-accent">
-							<span>Aktuelle Jahrgänge</span>
-							<span className="text-[10px] tracking-[0.24em] text-muted-foreground">Kleinauflage</span>
-						</div>
-						<ul className="flex flex-col gap-3">
-							{vintageList.map((v) => (
-								<li
-									key={`${v.name}-${v.year}`}
-									className="grid grid-cols-[1fr_auto_auto] items-baseline gap-4 border-b border-dashed border-[color:var(--ink-rule)] pb-3 last:border-b-0 last:pb-0"
-								>
-									<span className="font-display text-[22px] italic leading-[1.1]">{v.name}</span>
-									<span className="font-serif text-[14px] tabular-nums text-muted-foreground">{v.year}</span>
-									<span
-										className={`text-[9.5px] font-medium uppercase tracking-[0.24em] ${
-											v.sold ? "text-muted-foreground" : "text-accent"
-										}`}
+					{/* Aktuelle Jahrgänge — nur anzeigen, wenn CMS-Daten vorhanden sind */}
+					{vintageList.length > 0 && (
+						<div className="border-t border-[color:var(--ink-rule)] pt-6">
+							<div className="mb-5 flex items-baseline justify-between text-[10.5px] font-medium uppercase tracking-[0.32em] text-accent">
+								<span>Aktuelle Jahrgänge</span>
+								<span className="text-[10px] tracking-[0.24em] text-muted-foreground">Kleinauflage</span>
+							</div>
+							<ul className="flex flex-col gap-3">
+								{vintageList.map((v) => (
+									<li
+										key={`${v.name}-${v.year}`}
+										className="grid grid-cols-[1fr_auto_auto] items-baseline gap-4 border-b border-dashed border-[color:var(--ink-rule)] pb-3 last:border-b-0 last:pb-0"
 									>
-										{v.status}
-									</span>
-								</li>
-							))}
-						</ul>
-					</div>
+										<span className="font-display text-[22px] italic leading-[1.1]">{v.name}</span>
+										<span className="font-serif text-[14px] tabular-nums text-muted-foreground">{v.year}</span>
+										<span
+											className={`text-[9.5px] font-medium uppercase tracking-[0.24em] ${
+												v.sold ? "text-muted-foreground" : "text-accent"
+											}`}
+										>
+											{v.status}
+										</span>
+									</li>
+								))}
+							</ul>
+						</div>
+					)}
 				</aside>
 			</div>
 		</section>
