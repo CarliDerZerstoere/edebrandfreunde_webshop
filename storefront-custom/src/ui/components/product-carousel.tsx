@@ -25,6 +25,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 	const [emblaRef, emblaApi] = useEmblaCarousel({
 		align: "start",
 		containScroll: "trimSnaps",
+		slidesToScroll: "auto",
 		dragFree: false,
 		duration: prefersReduced ? 0 : 25,
 		watchDrag: true,
@@ -85,7 +86,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 			</button>
 
 			{/* ---- Embla viewport ---- */}
-			<div ref={emblaRef} className="overflow-hidden">
+			<div ref={emblaRef} tabIndex={-1} className="overflow-hidden">
 				<ul role="list" data-testid="ProductCarousel" className="flex gap-4 sm:gap-5">
 					{products.map((product, index) => (
 						<CarouselCard key={product.id} product={product} index={index} />
@@ -153,58 +154,72 @@ function CarouselCard({
 	});
 
 	return (
-		<li className="min-w-0 flex-[0_0_72%] sm:flex-[0_0_16rem] lg:flex-[0_0_18rem]">
-			<LinkWithChannel href={`/products/${product.slug}`} prefetch={false}>
-				<div className="group relative flex flex-col">
-					<div className="relative overflow-hidden rounded-lg">
-						{product.thumbnail?.url ? (
-							<>
-								<ProductImageWrapper
-									src={product.thumbnail.url}
-									alt={product.thumbnail.alt ?? product.name}
-									width={400}
-									height={533}
-									sizes="(max-width: 640px) 72vw, 288px"
-									loading={index < 3 ? "eager" : "lazy"}
-									priority={index < 2}
-									className="transition-transform duration-700 group-hover:scale-105"
-								/>
-								<div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-									<div className="w-full p-4">
-										<span className="inline-block rounded border border-accent-foreground/40 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-accent-foreground">
-											Jetzt ansehen
-										</span>
-									</div>
+		<li className="min-w-0 flex-[0_0_75%] max-w-[16rem] sm:max-w-none sm:flex-[0_0_46%] lg:flex-[0_0_33.333%] xl:flex-[0_0_25%]">
+			{/*
+			 * Card structure: content sits in a relatively-positioned <div>,
+			 * and the link is an absolute z-10 overlay. This is the pattern
+			 * required by CLAUDE.md (no block elements inside <a>) and it
+			 * also unblocks Embla touch drag — wrapping <img> inside <a>
+			 * triggers native image/link drag on mobile, which steals the
+			 * gesture from the carousel viewport.
+			 */}
+			<div className="group relative flex select-none flex-col [touch-action:pan-y]">
+				<div className="relative overflow-hidden rounded-lg">
+					{product.thumbnail?.url ? (
+						<>
+							<ProductImageWrapper
+								src={product.thumbnail.url}
+								alt={product.thumbnail.alt ?? product.name}
+								width={400}
+								height={533}
+								sizes="(max-width: 640px) 75vw, (max-width: 1024px) 46vw, (max-width: 1280px) 33vw, 25vw"
+								loading={index < 3 ? "eager" : "lazy"}
+								priority={index < 2}
+								draggable={false}
+								className="pointer-events-none transition-transform duration-700 group-hover:scale-105"
+							/>
+							<div className="pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+								<div className="w-full p-4">
+									<span className="inline-block rounded border border-accent-foreground/40 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-accent-foreground">
+										Jetzt ansehen
+									</span>
 								</div>
-							</>
-						) : (
-							<div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-secondary text-4xl">
-								&#9830;
 							</div>
-						)}
-
-						{product.category?.name && (
-							<div className="absolute left-3 top-3">
-								<span className="inline-block rounded bg-primary/80 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-primary-foreground backdrop-blur-sm">
-									{product.category.name}
-								</span>
-							</div>
-						)}
-					</div>
-
-					<div className="mt-3 flex items-start justify-between gap-2">
-						<div className="min-w-0">
-							<h3 className="truncate text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-accent">
-								{product.name}
-							</h3>
-							{product.category?.name && (
-								<p className="mt-0.5 text-xs text-muted-foreground">{product.category.name}</p>
-							)}
+						</>
+					) : (
+						<div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-secondary text-4xl">
+							&#9830;
 						</div>
-						<p className="shrink-0 text-sm font-semibold text-foreground">{price}</p>
-					</div>
+					)}
+
+					{product.category?.name && (
+						<div className="pointer-events-none absolute left-3 top-3">
+							<span className="inline-block rounded bg-primary/80 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-primary-foreground backdrop-blur-sm">
+								{product.category.name}
+							</span>
+						</div>
+					)}
 				</div>
-			</LinkWithChannel>
+
+				<div className="mt-3 flex items-start justify-between gap-2">
+					<div className="min-w-0">
+						<h3 className="truncate text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-accent">
+							{product.name}
+						</h3>
+						{product.category?.name && (
+							<p className="mt-0.5 text-xs text-muted-foreground">{product.category.name}</p>
+						)}
+					</div>
+					<p className="shrink-0 text-sm font-semibold text-foreground">{price}</p>
+				</div>
+
+				<LinkWithChannel
+					href={`/products/${product.slug}`}
+					prefetch={false}
+					aria-label={product.name}
+					className="absolute inset-0 z-10 rounded-lg [touch-action:pan-y] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+				/>
+			</div>
 		</li>
 	);
 }

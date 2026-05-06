@@ -47,7 +47,9 @@
 
 	html {
 		scroll-behavior: smooth;
-		/* Prevent horizontal page overflow from carousels, marquees, etc. */
+		/* `clip` (not `hidden`) — `hidden` establishes a scroll container,
+		   which breaks `position: sticky` on the header. `clip` is inert
+		   and prevents horizontal page overflow without that side effect. */
 		overflow-x: clip;
 	}
 
@@ -56,7 +58,6 @@
 		color: var(--foreground);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
-		/* Belt-and-suspenders: also clip on body for older browsers */
 		overflow-x: clip;
 	}
 }
