@@ -51,7 +51,7 @@ export function QualityCounter({ qualities }: QualityCounterProps) {
 		>
 			{qualities.map((q, cardIndex) => (
 				<QualityCard
-					key={q.title}
+					key={`${q.title}-${cardIndex}`}
 					quality={q}
 					cardIndex={cardIndex}
 					visible={visible}

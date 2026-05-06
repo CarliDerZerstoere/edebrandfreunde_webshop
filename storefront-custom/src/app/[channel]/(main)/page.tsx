@@ -403,7 +403,7 @@ function FeaturedSection({ page, products }: { page: any; products: any[] }) {
 			/>
 
 			<div
-				className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+				className="relative z-10 mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-6 lg:px-8"
 				style={{ paddingTop: "var(--section-py)", paddingBottom: "var(--section-py)" }}
 			>
 				<RevealOnScroll variant="fade-scale">
@@ -418,7 +418,7 @@ function FeaturedSection({ page, products }: { page: any; products: any[] }) {
 					)}
 				</RevealOnScroll>
 
-				<div className="mt-14">
+				<div className="mt-14 w-full min-w-0">
 					{products.length > 0 ? (
 						<>
 							<ProductCarousel products={products} />
@@ -426,7 +426,7 @@ function FeaturedSection({ page, products }: { page: any; products: any[] }) {
 								<div className="mt-14 text-center">
 									<LinkWithChannel
 										href="/products"
-										className="group inline-flex items-center gap-3 rounded border border-accent/50 px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-primary-foreground transition-all duration-300 hover:border-accent hover:bg-accent/10 hover:tracking-[0.22em]"
+										className="group inline-flex max-w-full items-center justify-center gap-3 rounded border border-accent/50 px-5 py-3.5 text-center text-sm font-medium uppercase tracking-[0.14em] text-primary-foreground transition-all duration-300 hover:border-accent hover:bg-accent/10 sm:px-8 sm:tracking-widest sm:hover:tracking-[0.22em]"
 									>
 										Alle Produkte ansehen
 										<span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">

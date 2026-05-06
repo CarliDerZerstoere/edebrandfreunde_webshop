@@ -165,11 +165,11 @@ export function FilterBar({
 														Farbe
 													</h3>
 													<div className="space-y-3">
-														{colorOptions.map((color) => {
+														{colorOptions.map((color, index) => {
 															const isSelected = selectedColors.includes(color.name);
 															return (
 																<button
-																	key={color.name}
+																	key={`${color.name}-${index}`}
 																	onClick={() => onColorToggle(color.name)}
 																	className="flex w-full items-center gap-3 text-left"
 																>
@@ -204,11 +204,11 @@ export function FilterBar({
 														Größe
 													</h3>
 													<div className="flex flex-wrap gap-2">
-														{sizeOptions.map((size) => {
+														{sizeOptions.map((size, index) => {
 															const isSelected = selectedSizes.includes(size.name);
 															return (
 																<button
-																	key={size.name}
+																	key={`${size.name}-${index}`}
 																	onClick={() => onSizeToggle(size.name)}
 																	className={`rounded-md border px-4 py-2 text-sm transition-colors ${
 																		isSelected
@@ -330,9 +330,9 @@ export function FilterBar({
 								<DropdownMenuContent align="start" className="w-56">
 									<DropdownMenuLabel>Farbe</DropdownMenuLabel>
 									<DropdownMenuSeparator />
-									{colorOptions.map((color) => (
+									{colorOptions.map((color, index) => (
 										<DropdownMenuCheckboxItem
-											key={color.name}
+											key={`${color.name}-${index}`}
 											checked={selectedColors.includes(color.name)}
 											onCheckedChange={() => onColorToggle(color.name)}
 										>
@@ -371,9 +371,9 @@ export function FilterBar({
 								<DropdownMenuContent align="start" className="w-48">
 									<DropdownMenuLabel>Größe</DropdownMenuLabel>
 									<DropdownMenuSeparator />
-									{sizeOptions.map((size) => (
+									{sizeOptions.map((size, index) => (
 										<DropdownMenuCheckboxItem
-											key={size.name}
+											key={`${size.name}-${index}`}
 											checked={selectedSizes.includes(size.name)}
 											onCheckedChange={() => onSizeToggle(size.name)}
 										>

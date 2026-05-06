@@ -39,8 +39,8 @@ function formatValue(value: string | boolean | string[]): ReactNode {
 	if (Array.isArray(value)) {
 		return (
 			<div className="flex flex-wrap justify-end gap-1">
-				{value.map((v) => (
-					<Badge key={v} variant="secondary" className="font-normal">
+				{value.map((v, index) => (
+					<Badge key={`${v}-${index}`} variant="secondary" className="font-normal">
 						{v}
 					</Badge>
 				))}
@@ -67,8 +67,8 @@ export function ProductAttributes({
 					</AccordionTrigger>
 					<AccordionContent>
 						<div className="prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-foreground prose-strong:text-foreground">
-							{descriptionHtml.map((html) => (
-								<div key={html} dangerouslySetInnerHTML={{ __html: html }} />
+							{descriptionHtml.map((html, index) => (
+								<div key={`${index}-${html.slice(0, 24)}`} dangerouslySetInnerHTML={{ __html: html }} />
 							))}
 						</div>
 					</AccordionContent>
@@ -82,8 +82,8 @@ export function ProductAttributes({
 					</AccordionTrigger>
 					<AccordionContent>
 						<div className="grid gap-3">
-							{displayAttributes.map((attr) => (
-								<div key={attr.name} className="flex items-start justify-between gap-4 text-sm">
+							{displayAttributes.map((attr, index) => (
+								<div key={`${attr.name}-${index}`} className="flex items-start justify-between gap-4 text-sm">
 									<span className="flex items-center gap-2 text-muted-foreground">
 										{attributeIcons[attr.name]}
 										{attr.name}

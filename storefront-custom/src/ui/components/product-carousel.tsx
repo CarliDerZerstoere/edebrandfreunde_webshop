@@ -43,17 +43,26 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 		setCanScrollNext(emblaApi.canScrollNext());
 	}, [emblaApi]);
 
-	useEffect(() => {
+	const syncCarouselState = useCallback(() => {
 		if (!emblaApi) return;
 		setScrollSnaps(emblaApi.scrollSnapList());
-		onSelect();
+		setSelectedIndex(emblaApi.selectedScrollSnap());
+		setCanScrollPrev(emblaApi.canScrollPrev());
+		setCanScrollNext(emblaApi.canScrollNext());
+	}, [emblaApi]);
+
+	useEffect(() => {
+		if (!emblaApi) return;
+
+		const frame = window.requestAnimationFrame(syncCarouselState);
 		emblaApi.on("select", onSelect);
-		emblaApi.on("reInit", onSelect);
+		emblaApi.on("reInit", syncCarouselState);
 		return () => {
+			window.cancelAnimationFrame(frame);
 			emblaApi.off("select", onSelect);
-			emblaApi.off("reInit", onSelect);
+			emblaApi.off("reInit", syncCarouselState);
 		};
-	}, [emblaApi, onSelect]);
+	}, [emblaApi, onSelect, syncCarouselState]);
 
 	const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
 	const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
@@ -62,7 +71,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 	if (products.length === 0) return null;
 
 	return (
-		<div className="group/carousel relative">
+		<div className="group/carousel relative w-full min-w-0">
 			{/* ---- Left arrow (desktop only) ---- */}
 			<button
 				type="button"
@@ -70,7 +79,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 				disabled={!canScrollPrev}
 				aria-label="Vorherige Produkte"
 				className={[
-					"absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-1/2",
+					"absolute left-3 top-1/2 z-10 -translate-y-1/2",
 					"hidden h-10 w-10 items-center justify-center rounded-full",
 					"border border-border bg-card/95 shadow-lg backdrop-blur-sm",
 					"text-foreground transition-all duration-300",
@@ -86,7 +95,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 			</button>
 
 			{/* ---- Embla viewport ---- */}
-			<div ref={emblaRef} tabIndex={-1} className="overflow-hidden">
+			<div ref={emblaRef} tabIndex={-1} className="w-full min-w-0 overflow-hidden">
 				<ul role="list" data-testid="ProductCarousel" className="flex gap-4 sm:gap-5">
 					{products.map((product, index) => (
 						<CarouselCard key={product.id} product={product} index={index} />
@@ -101,7 +110,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 				disabled={!canScrollNext}
 				aria-label="Nächste Produkte"
 				className={[
-					"absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2",
+					"absolute right-3 top-1/2 z-10 -translate-y-1/2",
 					"hidden h-10 w-10 items-center justify-center rounded-full",
 					"border border-border bg-card/95 shadow-lg backdrop-blur-sm",
 					"text-foreground transition-all duration-300",
@@ -116,22 +125,46 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
 				<ChevronRight />
 			</button>
 
-			{/* ---- Dots (mobile) ---- */}
+			{/* ---- Controls (mobile) ---- */}
 			{scrollSnaps.length > 1 && (
-				<div className="mt-4 flex items-center justify-center gap-1.5 lg:hidden" aria-hidden="true">
-					{scrollSnaps.map((_, i) => (
-						<button
-							key={i}
-							type="button"
-							onClick={() => scrollTo(i)}
-							className={[
-								"rounded-full transition-all duration-300",
-								i === selectedIndex
-									? "h-1.5 w-5 bg-accent"
-									: "h-1.5 w-1.5 bg-border hover:bg-muted-foreground",
-							].join(" ")}
-						/>
-					))}
+				<div className="mt-5 flex items-center justify-center gap-3 lg:hidden">
+					<button
+						type="button"
+						onClick={scrollPrev}
+						disabled={!canScrollPrev}
+						aria-label="Vorherige Produkte"
+						className="flex h-9 w-9 items-center justify-center rounded-full border border-primary-foreground/25 text-primary-foreground transition-colors hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-35"
+					>
+						<ChevronLeft />
+					</button>
+
+					<div className="flex min-w-24 items-center justify-center gap-1.5">
+						{scrollSnaps.map((_, i) => (
+							<button
+								key={i}
+								type="button"
+								onClick={() => scrollTo(i)}
+								aria-label={`Zu Produktgruppe ${i + 1}`}
+								aria-current={i === selectedIndex ? "true" : undefined}
+								className={[
+									"rounded-full transition-all duration-300",
+									i === selectedIndex
+										? "h-1.5 w-5 bg-accent"
+										: "h-1.5 w-1.5 bg-primary-foreground/35 hover:bg-primary-foreground/60",
+								].join(" ")}
+							/>
+						))}
+					</div>
+
+					<button
+						type="button"
+						onClick={scrollNext}
+						disabled={!canScrollNext}
+						aria-label="Nächste Produkte"
+						className="flex h-9 w-9 items-center justify-center rounded-full border border-primary-foreground/25 text-primary-foreground transition-colors hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-35"
+					>
+						<ChevronRight />
+					</button>
 				</div>
 			)}
 		</div>
@@ -154,7 +187,7 @@ function CarouselCard({
 	});
 
 	return (
-		<li className="min-w-0 flex-[0_0_75%] max-w-[16rem] sm:max-w-none sm:flex-[0_0_46%] lg:flex-[0_0_33.333%] xl:flex-[0_0_25%]">
+		<li className="min-w-0 shrink-0 grow-0 basis-[82%] sm:basis-[46%] lg:basis-1/3 xl:basis-1/4">
 			{/*
 			 * Card structure: content sits in a relatively-positioned <div>,
 			 * and the link is an absolute z-10 overlay. This is the pattern
@@ -180,14 +213,14 @@ function CarouselCard({
 							/>
 							<div className="pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-foreground/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
 								<div className="w-full p-4">
-									<span className="inline-block rounded border border-accent-foreground/40 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-accent-foreground">
+									<span className="inline-block rounded border border-primary-foreground/40 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-primary-foreground">
 										Jetzt ansehen
 									</span>
 								</div>
 							</div>
 						</>
 					) : (
-						<div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-secondary text-4xl">
+						<div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-primary-foreground/10 text-4xl text-primary-foreground/40">
 							&#9830;
 						</div>
 					)}
@@ -203,14 +236,14 @@ function CarouselCard({
 
 				<div className="mt-3 flex items-start justify-between gap-2">
 					<div className="min-w-0">
-						<h3 className="truncate text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-accent">
+						<h3 className="truncate text-sm font-semibold text-primary-foreground transition-colors duration-200 group-hover:text-accent">
 							{product.name}
 						</h3>
 						{product.category?.name && (
-							<p className="mt-0.5 text-xs text-muted-foreground">{product.category.name}</p>
+							<p className="mt-0.5 text-xs text-primary-foreground/55">{product.category.name}</p>
 						)}
 					</div>
-					<p className="shrink-0 text-sm font-semibold text-foreground">{price}</p>
+					<p className="shrink-0 text-sm font-semibold text-primary-foreground">{price}</p>
 				</div>
 
 				<LinkWithChannel

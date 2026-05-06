@@ -237,7 +237,7 @@ export function CartDrawer({ checkoutId, lines, totalPrice, channel }: CartDrawe
 														{variantAttributes.length > 0 ? (
 															<div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
 																{variantAttributes.map((attr, index) => (
-																	<span key={attr.name} className="flex items-center gap-1.5">
+																	<span key={`${attr.name}-${attr.value}-${index}`} className="flex items-center gap-1.5">
 																		{index > 0 && <span className="text-border">|</span>}
 																		{attr.colorHex && (
 																			<span

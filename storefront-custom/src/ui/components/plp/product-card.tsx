@@ -172,9 +172,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 					{/* Color Swatches */}
 					{product.colors && product.colors.length > 1 && (
 						<div className="flex items-center gap-1.5 pt-1">
-							{product.colors.slice(0, 4).map((color) => (
+							{product.colors.slice(0, 4).map((color, index) => (
 								<span
-									key={color.name}
+									key={`${color.name}-${index}`}
 									className="h-4 w-4 rounded-full border border-border"
 									style={{ backgroundColor: color.hex }}
 									title={color.name}
