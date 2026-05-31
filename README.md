@@ -361,7 +361,7 @@ Das Skript ist idempotent (zwei Mal ausführen schadet nicht) und lässt SSH **v
 | 1 | **Zahlungsanbieter (Stripe)** Integration | Saleor Dashboard → Configuration → Plugins, dann Storefront Checkout |
 | 2 | **Mail-Versand operational machen** — Port 25 gesperrt, brauchen Relay | Hetzner Support-Ticket für Port-25-Unblock ODER Brevo/Mailgun als Smart-Host |
 | 3 | **DNS-Records für Mail**: A-Record `mail.edelbrandfreunde.at`, Reverse-DNS (PTR), SPF, DKIM, DMARC | Hetzner Cloud Console + Domain-Provider |
-| 4 | **Altersverifikation 18+ Checkbox** im Checkout (NÖ JG §18) | `storefront-custom/src/checkout/` |
+| 4 | **Altersverifikation 18+ Checkbox** im Checkout (NÖ JG §18) | ✅ **Erledigt** (in `storefront-custom/src/checkout/`) |
 | 5 | **Impressum / Datenschutz / Widerruf ausfüllen** — `[BITTE AUSFÜLLEN]` Platzhalter ersetzen | Saleor Dashboard → Content → Pages |
 | 6 | **Saleor-Admin-Passwort rotieren** (`TempAdmin2026!` ist temporär) | Dashboard → Account-Icon → Account |
 

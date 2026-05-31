@@ -5,6 +5,7 @@ import "./globals.css";
 import { type ReactNode } from "react";
 import { rootMetadata } from "@/lib/seo";
 import { localeConfig } from "@/config/locale";
+import { AgeGate } from "@/ui/components/age-gate";
 // SpeedInsights removed — only works on Vercel hosting, causes 404 + hydration errors on self-hosted
 
 /**
@@ -45,7 +46,8 @@ export default function RootLayout(props: { children: ReactNode }) {
 			lang={localeConfig.htmlLang}
 			className={`${GeistSans.variable} ${GeistMono.variable} ${cormorant.variable} ${ebGaramond.variable} ${caveat.variable} min-h-dvh`}
 		>
-			<body className="min-h-dvh font-sans">
+			<body className="min-h-dvh font-sans animate-fade-in">
+				<AgeGate />
 				{children}
 			</body>
 		</html>

@@ -5,6 +5,9 @@ import { ChevronLeft, AlertCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/ui/components/ui/button";
 import { CheckoutSummaryContext, buildPaymentSummaryRows } from "./checkout-summary-context";
+import { Label } from "@/ui/components/ui/label";
+import { Checkbox } from "@/ui/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import {
 	type CheckoutFragment,
 	type CountryCode,
@@ -60,6 +63,9 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 	// For digital products, there's no shipping address, so can't use "same as billing"
 	const isShippingRequired = checkout.isShippingRequired;
 	const hasShippingAddress = !!checkout.shippingAddress;
+
+	// Age verification state (Jugendschutz)
+	const [ageVerified, setAgeVerified] = useState(false);
 
 	// Payment method state
 	const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>("card");
@@ -154,6 +160,20 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			}
 
 			setErrors({});
+
+			// Age verification validation (NÖ JG §18)
+			if (!ageVerified) {
+				setErrors({
+					ageVerification: "Bitte bestätigen Sie, dass Sie mindestens 18 Jahre alt sind.",
+				});
+				const element = document.getElementById("age-verification");
+				if (element) {
+					element.scrollIntoView({ behavior: "smooth", block: "center" });
+					const focusTarget = document.getElementById("age-verification-checkbox");
+					focusTarget?.focus();
+				}
+				return;
+			}
 
 			// Validate billing address if different from shipping (or for digital products)
 			const needsBillingForm = !sameAsBilling || !hasShippingAddress;
@@ -330,6 +350,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			onComplete,
 			searchParams,
 			router,
+			ageVerified,
 		],
 	);
 
@@ -401,6 +422,48 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				onSameAsShippingChange={setSameAsBilling}
 				initialSameAsShipping={sameAsBilling}
 			/>
+
+			{/* Altersverifikation (Jugendschutz) */}
+			<div
+				id="age-verification"
+				className={cn(
+					"space-y-3 rounded-lg border p-5 transition-all duration-300",
+					errors.ageVerification
+						? "border-destructive bg-destructive/5"
+						: "border-copper/20 bg-copper-subtle/5 hover:border-copper/40"
+				)}
+			>
+				<div className="flex items-start gap-4">
+					<Checkbox
+						id="age-verification-checkbox"
+						checked={ageVerified}
+						onCheckedChange={setAgeVerified}
+						className={cn(
+							"mt-0.5",
+							errors.ageVerification
+								? "border-destructive focus-visible:ring-destructive"
+								: "border-copper/50 focus-visible:ring-copper"
+						)}
+					/>
+					<div className="space-y-1.5">
+						<Label
+							htmlFor="age-verification-checkbox"
+							className="cursor-pointer text-sm font-semibold text-foreground select-none"
+						>
+							Ich bestätige, dass ich mindestens 18 Jahre alt bin. *
+						</Label>
+						<p className="text-xs leading-relaxed text-muted-foreground">
+							Der Verkauf und die Lieferung von Alkoholika erfolgen ausschließlich an Personen über 18 Jahren. Gemäß dem Niederösterreichischen Jugendschutzgesetz (NÖ JG §18) sind wir gesetzlich verpflichtet, das Alter unserer Kunden zu verifizieren. Die Paketübergabe kann mit einer Altersprüfung (ID-Check) durch den Zustelldienst (z.B. Post) verbunden sein.
+						</p>
+					</div>
+				</div>
+				{errors.ageVerification && (
+					<p className="text-xs text-destructive flex items-center gap-1.5 pl-9 animate-fade-in-up">
+						<AlertCircle className="h-3.5 w-3.5" />
+						{errors.ageVerification}
+					</p>
+				)}
+			</div>
 
 			{/* Payment/Checkout Error Display */}
 			{errors.payment && (
